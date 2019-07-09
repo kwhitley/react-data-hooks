@@ -1,0 +1,50 @@
+{
+  "name": "react-use-rest",
+  "version": "0.2.3",
+  "description": "React.js data hooks for REST endpoints",
+  "main": "index.js",
+  "target": "esnext",
+  "scripts": {
+    "prebuild": "yarn test && rm -rf build",
+    "test": "jest --verbose",
+    "test:watch": "yarn test - --watch",
+    "build": "babel src --ignore '**/*.spec.js' --out-dir build -d",
+    "release": "yarn build && release --src=build --push",
+    "release:major": "yarn release --major",
+    "release:minor": "yarn release --minor",
+    "release:patch": "yarn release --patch"
+  },
+  "author": "Kevin R. Whitley <krwhitley@gmail.com>",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kwhitley/react-use-rest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kwhitley/react-use-rest/issues",
+    "email": "krwhitley@gmail.com"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.5.0",
+    "@babel/core": "^7.5.0",
+    "@babel/plugin-proposal-class-properties": "^7.5.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.5.0",
+    "@babel/preset-env": "^7.5.3",
+    "@babel/preset-react": "^7.0.0",
+    "@testing-library/react-hooks": "^1.1.0",
+    "jest": "^24.8.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-test-renderer": "^16.8.6",
+    "yarn-release": "^1.9.2"
+  },
+  "peerDependencies": {
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "deepmerge": "^4.0.0",
+    "use-store-hook": "^1.4.0"
+  }
+}
