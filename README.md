@@ -1,5 +1,5 @@
 # react-use-rest
-React.js data hooks for REST API endpoints]
+React.js data hooks for REST API endpoints
 ---
 [![gzip size](https://img.badgesize.io/https://unpkg.com/react-use-rest?compression=gzip&style=flat-square)](https://unpkg.com/react-use-rest)
 
