@@ -15,15 +15,15 @@ describe('react-use-rest', () => {
 
     const attributes = [
       { name: 'data', type: 'object' },
+      { name: 'setData', type: 'function' },
       { name: 'isLoading', type: 'boolean' },
       { name: 'error', type: 'undefined' },
-      { name: 'setData', type: 'function' },
-      { name: 'loadData', type: 'function' },
-      { name: 'createAction', type: 'function' },
-      { name: 'deleteAction', type: 'function' },
-      { name: 'updateAction', type: 'function' },
-      { name: 'replaceAction', type: 'function' },
+      { name: 'load', type: 'function' },
       { name: 'refresh', type: 'function' },
+      { name: 'create', type: 'function' },
+      { name: 'remove', type: 'function' },
+      { name: 'replace', type: 'function' },
+      { name: 'update', type: 'function' },
     ]
 
     let hook = result.current

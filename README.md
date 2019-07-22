@@ -47,24 +47,26 @@ export default function MyApp() {
     data = [],                      // data returned from API (defaults to empty array)
     isLoading,                      // isLoading flag (true during pending requests)
     error,                          // API error (if any)
-    updateAction,                   // PATCH fn(item, oldItem) - checks for changes and sends diff via PATCH
-    replaceAction,                  // PUT fn(item, oldItem) - checks for changes and sends item via PUT
-    deleteAction,                   // DELETE fn(item, oldItem) - deletes item
-    createAction,                   // POST fn(item, oldItem) - creates item
-    loadData,                       // refresh/load data via GET
-    refresh                         // alias for loadData()
+    update,                         // PATCH fn(item, oldItem) - sends only changes via PATCH (if changed)
+    replace,                        // PUT fn(item, oldItem) - sends full item via PUT (if changed)
+    remove,                         // DELETE fn(item, oldItem) - deleted item
+    create,                         // POST fn(item, oldItem) - creates item
+    load,                           // refresh/load data via GET
+    refresh                         // alias for load()
   } = useKittens({
-    getId: item => item._id,        // tell the hook how to derive item ID from a collection item
-    persist: true,                  // will persist results to localStorage for fast delivery on page refresh
-    autoload: true,                 // data will autoload by default unless set to false,
-    interval: 5000,                 // refresh collection every 5000ms (5s),
+    axios: myAxiosInstance,         // can pass in a custom axios instance to use (for advanced usage)
+    autoload: true,                 // data will fire initial GET by default unless set to false,
     filter: item => item.age > 5,   // can client-side filter results (in case your API doesn't have filters),
+    getId: item => item._id,        // tell the hook how to derive item ID from a collection item
+    initialValue: []                // initial value of "data" return (typically [])
+    interval: 5000,                 // refresh collection every 5000ms (5s),
+    log: true                       // enable console.log output
+    mock: true,                     // only simulate POST/PUT/PATCH/DELETE actions (for testing)
+    persist: true,                  // will persist results to localStorage for fast delivery on page refresh
     query: { adopted: false },      // can send fixed query params via object or....
     query: () => ({ adopted: Math.random() > 0.5 }) // via function executed at time of [every] load
     transform: data =>
       data.kittens.slice(0,5),      // in case you need to reshape your API payload
-    mock: true,                     // only simulate POST/PUT/PATCH/DELETE actions (for testing)
-    log: true                       // enable console.log output
   })
 
   return (
@@ -73,7 +75,7 @@ export default function MyApp() {
         data.map(kitten => (
           <li key={kitten._id}>
             { kitten.name } -
-            <button onClick={() => deleteAction(kitten)}>
+            <button onClick={() => remove(kitten)}>
               Delete
             </button>
           </li>

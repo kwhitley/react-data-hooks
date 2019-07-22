@@ -55,30 +55,37 @@ var createRestHook = function createRestHook(endpoint) {
 
     var id = args[0],
         hookOptions = args[1];
-    var isCollection = false; // for collections, clear id, and derive options from first param
+    var isCollection = true;
+    var isMounted = true; // for collections, clear id, and derive options from first param
 
-    if (_typeof(id) === 'object' || !args.length) {
-      hookOptions = id;
+    if (id !== undefined && _typeof(id) !== 'object' && args.length) {
+      // e.g. useHook('foo') useHook(3) useHook(undefined)
+      isCollection = false;
+    } else if (id === undefined && args.length === 1) {
+      isCollection = false;
+    } else if (hookOptions === undefined) {
+      // e.g. useHook({ something })
+      hookOptions = id; // use first param as options
+
       id = undefined;
-      isCollection = true;
     } // local options are a blend of factory options and instantiation options
 
 
     var options = (0, _deepmerge["default"])(createHookOptions, hookOptions || {}); // extract options
 
-    var transform = options.transform,
-        getId = options.getId,
-        initialValue = options.initialValue,
-        filter = options.filter,
-        mock = options.mock,
-        interval = options.interval,
-        log = options.log,
-        _options$query = options.query,
-        query = _options$query === void 0 ? {} : _options$query,
+    var _options$autoload = options.autoload,
+        autoload = _options$autoload === void 0 ? true : _options$autoload,
         _options$axios = options.axios,
         axios = _options$axios === void 0 ? _axios["default"] : _options$axios,
-        _options$autoload = options.autoload,
-        autoload = _options$autoload === void 0 ? true : _options$autoload; // getId(item) is used to derive the endpoint for update/delete/replace actions
+        filter = options.filter,
+        getId = options.getId,
+        initialValue = options.initialValue,
+        interval = options.interval,
+        log = options.log,
+        mock = options.mock,
+        _options$query = options.query,
+        query = _options$query === void 0 ? {} : _options$query,
+        transform = options.transform; // getId(item) is used to derive the endpoint for update/delete/replace actions
 
     getId = getId || function (item) {
       return item.id;
@@ -86,7 +93,7 @@ var createRestHook = function createRestHook(endpoint) {
 
 
     initialValue = initialValue || (isCollection ? [] : undefined);
-    var key = 'datahook:' + endpoint + JSON.stringify(args);
+    var key = 'resthook:' + endpoint + JSON.stringify(args);
 
     var _useStore = (0, _useStoreHook.useStore)(key, initialValue, options),
         _useStore2 = _slicedToArray(_useStore, 2),
@@ -105,74 +112,9 @@ var createRestHook = function createRestHook(endpoint) {
 
     var handleError = function handleError(error) {
       log && log('handleError executed');
-      setIsLoading(false);
-      setError(error);
-      throw new Error(error);
-    }; // data load function
-
-
-    var loadData = function loadData() {
-      var loadDataOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      var opt = (0, _deepmerge["default"])(options, loadDataOptions);
-      var query = opt.query,
-          transform = opt.transform; // if query param is a function, run it to derive up-to-date params
-
-      query = typeof query === 'function' ? query() : query;
-      log && log({
-        endpoint: endpoint,
-        query: query
-      }); // only lock with loading when not pre-populated
-
-      !isLoading && setIsLoading(true);
-      error && setError(undefined);
-      axios.get(getEndpoint(endpoint, id), {
-        params: query
-      }).then(function (_ref) {
-        var data = _ref.data;
-        log && log('payload data', data); // dig into nested payloads if required
-
-        data = data.data || data;
-
-        if (transform) {
-          data = transform(data);
-        }
-
-        if (filter) {
-          if (typeof filter === 'function') {
-            data = data.filter(filter);
-          } else {
-            data = data.filter((0, _utils.objectFilter)(filter));
-          }
-        }
-
-        setData(data);
-        setIsLoading(false);
-      })["catch"](handleError);
-    }; // automatically load data upon component load and set up intervals, if defined
-
-
-    (0, _react.useEffect)(function () {
-      var loadingInterval;
-
-      if (id || isCollection) {
-        if (autoload) {
-          loadData();
-        }
-
-        if (interval) {
-          loadingInterval = setInterval(loadData, interval);
-        }
-      }
-
-      return function () {
-        if (loadingInterval) {
-          log && log('clearing loadData() interval', {
-            interval: interval
-          });
-          clearInterval(loadingInterval);
-        }
-      };
-    }, []);
+      isMounted && setIsLoading(false);
+      isMounted && setError(error);
+    };
 
     var createActionType = function createActionType() {
       var actionOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -207,14 +149,14 @@ var createRestHook = function createRestHook(endpoint) {
           payload = item;
         }
 
-        setIsLoading(true);
+        isMounted && setIsLoading(true);
 
         var resolve = function resolve() {
-          setIsLoading(false); // short circuit for non-collection calls
+          isMounted && setIsLoading(false); // short circuit for non-collection calls
 
           if (!isCollection) {
             log && log("non-collection action ".concat(actionType, ": setting data to"), item);
-            return setData(item);
+            return isMounted && setData(item);
           }
 
           var newData = data;
@@ -227,7 +169,7 @@ var createRestHook = function createRestHook(endpoint) {
           } else if (actionType === 'create') {
             log && log('adding item to internal collection');
             newData = [].concat(_toConsumableArray(data), [item]);
-          } else if (actionType === 'delete') {
+          } else if (actionType === 'remove') {
             log && log('deleting item from internal collection');
             newData = data.filter(function (i) {
               return i !== item;
@@ -235,12 +177,12 @@ var createRestHook = function createRestHook(endpoint) {
           } // update internal data
 
 
-          setData(newData);
-        }; // mock exit for success
+          isMounted && setData(newData);
+        };
 
+        log && log("calling \"".concat(method, "\" to"), getEndpoint(endpoint, itemId), payload); // mock exit for success
 
         if (mock) {
-          log && log("mock ".concat(actionType), getEndpoint(endpoint, itemId), payload);
           return (0, _utils.autoResolve)('Success!', {
             fn: resolve
           });
@@ -250,33 +192,94 @@ var createRestHook = function createRestHook(endpoint) {
       };
     };
 
-    var updateAction = createActionType({
+    var update = createActionType({
       actionType: 'update',
       method: 'patch'
     });
-    var replaceAction = createActionType({
+    var replace = createActionType({
       actionType: 'replace',
       method: 'put'
     });
-    var deleteAction = createActionType({
-      actionType: 'delete',
+    var remove = createActionType({
+      actionType: 'remove',
       method: 'delete'
     });
-    var createAction = createActionType({
+    var create = createActionType({
       actionType: 'create',
       method: 'post'
-    });
+    }); // data load function
+
+    var load = function load() {
+      var loadOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var opt = (0, _deepmerge["default"])(options, loadOptions);
+      var query = opt.query,
+          transform = opt.transform; // if query param is a function, run it to derive up-to-date params
+
+      query = typeof query === 'function' ? query() : query;
+      log && log({
+        endpoint: endpoint,
+        query: query
+      }); // only lock with loading when not pre-populated
+
+      !isLoading && isMounted && setIsLoading(true);
+      error && isMounted && etError(undefined);
+      axios.get(getEndpoint(endpoint, id), {
+        params: query
+      }).then(function (_ref) {
+        var data = _ref.data;
+        log && log('payload data', data); // dig into nested payloads if required
+
+        data = data.data || data;
+
+        if (transform) {
+          data = transform(data);
+        }
+
+        if (filter) {
+          if (typeof filter === 'function') {
+            data = data.filter(filter);
+          } else {
+            data = data.filter((0, _utils.objectFilter)(filter));
+          }
+        }
+
+        isMounted && setData(data);
+        isMounted && setIsLoading(false);
+      })["catch"](handleError);
+    }; // automatically load data upon component load and set up intervals, if defined
+
+
+    (0, _react.useEffect)(function () {
+      var loadingInterval;
+
+      if (id || isCollection) {
+        autoload && load();
+
+        if (interval) {
+          loadingInterval = setInterval(load, interval);
+        }
+      }
+
+      return function () {
+        if (loadingInterval) {
+          log && log('clearing load() interval', {
+            interval: interval
+          });
+          clearInterval(loadingInterval);
+        }
+
+        isMounted = false;
+      };
+    }, [id]);
     return {
       data: data,
-      collectionName: options.collectionName,
-      itemName: options.itemName,
       setData: setData,
-      loadData: loadData,
-      refresh: loadData,
-      createAction: createAction,
-      deleteAction: deleteAction,
-      updateAction: updateAction,
-      replaceAction: replaceAction,
+      load: load,
+      refresh: load,
+      create: create,
+      remove: remove,
+      update: update,
+      replace: replace,
       isLoading: isLoading,
       error: error
     };
