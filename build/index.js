@@ -83,6 +83,7 @@ var createRestHook = function createRestHook(endpoint) {
         interval = options.interval,
         log = options.log,
         mock = options.mock,
+        onError = options.onError,
         _options$query = options.query,
         query = _options$query === void 0 ? {} : _options$query,
         transform = options.transform; // getId(item) is used to derive the endpoint for update/delete/replace actions
@@ -113,7 +114,8 @@ var createRestHook = function createRestHook(endpoint) {
     var handleError = function handleError(error) {
       log && log('handleError executed');
       isMounted && setIsLoading(false);
-      isMounted && setError(error);
+      isMounted && setError(error.message || error);
+      onError && onError(error);
     };
 
     var createActionType = function createActionType() {
@@ -152,32 +154,37 @@ var createRestHook = function createRestHook(endpoint) {
         isMounted && setIsLoading(true);
 
         var resolve = function resolve() {
-          isMounted && setIsLoading(false); // short circuit for non-collection calls
+          try {
+            isMounted && setIsLoading(false); // short circuit for non-collection calls
 
-          if (!isCollection) {
-            log && log("non-collection action ".concat(actionType, ": setting data to"), item);
-            return isMounted && setData(item);
+            if (!isCollection) {
+              log && log("non-collection action ".concat(actionType, ": setting data to"), item);
+              return isMounted && setData(item);
+            }
+
+            var newData = data;
+
+            if (['update', 'replace'].includes(actionType)) {
+              log && log('updating item in internal collection');
+              newData = data.map(function (i) {
+                return getId(i) === itemId ? item : i;
+              });
+            } else if (actionType === 'create') {
+              log && log('adding item to internal collection');
+              newData = [].concat(_toConsumableArray(data), [item]);
+            } else if (actionType === 'remove') {
+              log && log('deleting item from internal collection');
+              newData = data.filter(function (i) {
+                return i !== item;
+              });
+            } // update internal data
+
+
+            isMounted && setData(newData);
+          } catch (err) {
+            onError && onError(err);
+            isMounted && setError(err.message);
           }
-
-          var newData = data;
-
-          if (['update', 'replace'].includes(actionType)) {
-            log && log('updating item in internal collection');
-            newData = data.map(function (i) {
-              return getId(i) === itemId ? item : i;
-            });
-          } else if (actionType === 'create') {
-            log && log('adding item to internal collection');
-            newData = [].concat(_toConsumableArray(data), [item]);
-          } else if (actionType === 'remove') {
-            log && log('deleting item from internal collection');
-            newData = data.filter(function (i) {
-              return i !== item;
-            });
-          } // update internal data
-
-
-          isMounted && setData(newData);
         };
 
         log && log("calling \"".concat(method, "\" to"), getEndpoint(endpoint, itemId), payload); // mock exit for success
@@ -222,29 +229,35 @@ var createRestHook = function createRestHook(endpoint) {
       }); // only lock with loading when not pre-populated
 
       !isLoading && isMounted && setIsLoading(true);
-      error && isMounted && etError(undefined);
+      error && isMounted && setError(undefined);
       axios.get(getEndpoint(endpoint, id), {
         params: query
       }).then(function (_ref) {
         var data = _ref.data;
-        log && log('payload data', data); // dig into nested payloads if required
 
-        data = data.data || data;
+        try {
+          log && log('payload data', data); // dig into nested payloads if required
 
-        if (transform) {
-          data = transform(data);
-        }
+          data = data.data || data;
 
-        if (filter) {
-          if (typeof filter === 'function') {
-            data = data.filter(filter);
-          } else {
-            data = data.filter((0, _utils.objectFilter)(filter));
+          if (transform) {
+            data = transform(data);
           }
-        }
 
-        isMounted && setData(data);
-        isMounted && setIsLoading(false);
+          if (filter) {
+            if (typeof filter === 'function') {
+              data = data.filter(filter);
+            } else {
+              data = data.filter((0, _utils.objectFilter)(filter));
+            }
+          }
+
+          isMounted && setData(data);
+          isMounted && setIsLoading(false);
+        } catch (err) {
+          onError && onError(err);
+          isMounted && setError(err.message);
+        }
       })["catch"](handleError);
     }; // automatically load data upon component load and set up intervals, if defined
 

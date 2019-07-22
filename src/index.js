@@ -42,6 +42,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     interval,
     log,
     mock,
+    onError,
     query = {},
     transform,
   } = options
@@ -60,7 +61,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   const handleError = (error) => {
     log && log('handleError executed')
     isMounted && setIsLoading(false)
-    isMounted && setError(error)
+    isMounted && setError(error.message || error)
+    onError && onError(error)
   }
 
   const createActionType = (actionOptions = {}) => (item, oldItem) => {
@@ -97,29 +99,34 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     isMounted && setIsLoading(true)
 
     const resolve = () => {
-      isMounted && setIsLoading(false)
+      try {
+        isMounted && setIsLoading(false)
 
-      // short circuit for non-collection calls
-      if (!isCollection) {
-        log && log(`non-collection action ${actionType}: setting data to`, item)
-        return isMounted && setData(item)
+        // short circuit for non-collection calls
+        if (!isCollection) {
+          log && log(`non-collection action ${actionType}: setting data to`, item)
+          return isMounted && setData(item)
+        }
+
+        let newData = data
+
+        if (['update', 'replace'].includes(actionType)) {
+          log && log('updating item in internal collection')
+          newData = data.map(i => getId(i) === itemId ? item : i)
+        } else if (actionType === 'create') {
+          log && log('adding item to internal collection')
+          newData = [...data, item]
+        } else if (actionType === 'remove') {
+          log && log('deleting item from internal collection')
+          newData = data.filter(i => i !== item)
+        }
+
+        // update internal data
+        isMounted && setData(newData)
+      } catch (err) {
+        onError && onError(err)
+        isMounted && setError(err.message)
       }
-
-      let newData = data
-
-      if (['update', 'replace'].includes(actionType)) {
-        log && log('updating item in internal collection')
-        newData = data.map(i => getId(i) === itemId ? item : i)
-      } else if (actionType === 'create') {
-        log && log('adding item to internal collection')
-        newData = [...data, item]
-      } else if (actionType === 'remove') {
-        log && log('deleting item from internal collection')
-        newData = data.filter(i => i !== item)
-      }
-
-      // update internal data
-      isMounted && setData(newData)
     }
 
     log && log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)
@@ -152,29 +159,34 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     // only lock with loading when not pre-populated
     !isLoading && isMounted && setIsLoading(true)
 
-    error && isMounted && etError(undefined)
+    error && isMounted && setError(undefined)
 
     axios
       .get(getEndpoint(endpoint, id), { params: query })
       .then(({ data }) => {
-        log && log('payload data', data)
-        // dig into nested payloads if required
-        data = data.data || data
+        try {
+          log && log('payload data', data)
+          // dig into nested payloads if required
+          data = data.data || data
 
-        if (transform) {
-          data = transform(data)
-        }
-
-        if (filter) {
-          if (typeof filter === 'function') {
-            data = data.filter(filter)
-          } else {
-            data = data.filter(objectFilter(filter))
+          if (transform) {
+            data = transform(data)
           }
-        }
 
-        isMounted && setData(data)
-        isMounted && setIsLoading(false)
+          if (filter) {
+            if (typeof filter === 'function') {
+              data = data.filter(filter)
+            } else {
+              data = data.filter(objectFilter(filter))
+            }
+          }
+
+          isMounted && setData(data)
+          isMounted && setIsLoading(false)
+        } catch (err) {
+          onError && onError(err)
+          isMounted && setError(err.message)
+        }
       })
       .catch(handleError)
   }

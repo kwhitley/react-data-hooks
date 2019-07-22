@@ -33,20 +33,20 @@ export default function MyApp() {
 }
 ```
 
-### Example 2 (Advanced)
+### Example 2 (all options/returns exposed)
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
 
 // create a data hook
-const useKittens = createRestHook('/api/kittens')
+const useKittens = createRestHook('/api/kittens') // any options may be included here for convenience
 
 export default function MyApp() {
   // instantiate data hook with options (all options may also be passed at time of creation [above])
   let {
     data = [],                      // data returned from API (defaults to empty array)
     isLoading,                      // isLoading flag (true during pending requests)
-    error,                          // API error (if any)
+    error,                          // API error (if any) - this is
     update,                         // PATCH fn(item, oldItem) - sends only changes via PATCH (if changed)
     replace,                        // PUT fn(item, oldItem) - sends full item via PUT (if changed)
     remove,                         // DELETE fn(item, oldItem) - deleted item
@@ -62,9 +62,10 @@ export default function MyApp() {
     interval: 5000,                 // refresh collection every 5000ms (5s),
     log: true                       // enable console.log output
     mock: true,                     // only simulate POST/PUT/PATCH/DELETE actions (for testing)
+    onError: console.warn           // do something custom with error events (e.g. toasts, logs, etc)
     persist: true,                  // will persist results to localStorage for fast delivery on page refresh
-    query: { adopted: false },      // can send fixed query params via object or....
-    query: () => ({ adopted: Math.random() > 0.5 }) // via function executed at time of [every] load
+    query: { isCute: true },        // can send fixed query params via object or....
+    query: () => ({ isCute: Math.random() > 0.1 }) // via function executed at time of [every] load
     transform: data =>
       data.kittens.slice(0,5),      // in case you need to reshape your API payload
   })
