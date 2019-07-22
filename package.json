@@ -1,6 +1,6 @@
 {
   "name": "react-use-rest",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "React.js data hooks for REST endpoints",
   "main": "index.js",
   "target": "esnext",
@@ -25,11 +25,11 @@
     "email": "krwhitley@gmail.com"
   },
   "devDependencies": {
-    "@babel/cli": "^7.5.0",
-    "@babel/core": "^7.5.0",
-    "@babel/plugin-proposal-class-properties": "^7.5.0",
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
     "@babel/plugin-transform-modules-commonjs": "^7.5.0",
-    "@babel/preset-env": "^7.5.3",
+    "@babel/preset-env": "^7.5.5",
     "@babel/preset-react": "^7.0.0",
     "@testing-library/react-hooks": "^1.1.0",
     "jest": "^24.8.0",
