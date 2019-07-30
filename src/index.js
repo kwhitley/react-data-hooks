@@ -12,6 +12,16 @@ import {
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
 
+// helper function to handle functions that may be passed a DOM event
+const eventable = (fn) => (...args) => {
+  let arg0 = args[0] || {}
+  if (arg0.nativeEvent instanceof Event) {
+    return fn()
+  }
+
+  return fn(...args)
+}
+
 export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
   let [ id, hookOptions ] = args
   let isCollection = true
@@ -216,8 +226,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   return {
     data,
     setData,
-    load,
-    refresh: load,
+    load: eventable(load),
+    refresh: eventable(load),
     create,
     remove,
     update,

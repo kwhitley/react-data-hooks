@@ -44,6 +44,19 @@ var getEndpoint = function getEndpoint() {
   return parts.filter(function (p) {
     return p !== undefined;
   }).join('/');
+}; // helper function to handle functions that may be passed a DOM event
+
+
+var eventable = function eventable(fn) {
+  return function () {
+    var arg0 = (arguments.length <= 0 ? undefined : arguments[0]) || {};
+
+    if (arg0.nativeEvent instanceof Event) {
+      return fn();
+    }
+
+    return fn.apply(void 0, arguments);
+  };
 };
 
 var createRestHook = function createRestHook(endpoint) {
@@ -287,8 +300,8 @@ var createRestHook = function createRestHook(endpoint) {
     return {
       data: data,
       setData: setData,
-      load: load,
-      refresh: load,
+      load: eventable(load),
+      refresh: eventable(load),
       create: create,
       remove: remove,
       update: update,
