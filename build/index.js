@@ -194,7 +194,7 @@ var createRestHook = function createRestHook(endpoint) {
             } else if (actionType === 'remove') {
               log && log('deleting item from internal collection');
               newData = data.filter(function (i) {
-                return i !== item;
+                return getId(i) !== itemId;
               });
             } // update internal data
 

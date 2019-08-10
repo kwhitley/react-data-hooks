@@ -132,7 +132,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           newData = [...data, item]
         } else if (actionType === 'remove') {
           log && log('deleting item from internal collection')
-          newData = data.filter(i => i !== item)
+          newData = data.filter(i => getId(i) !== itemId)
         }
 
         // update internal data
