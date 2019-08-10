@@ -95,6 +95,10 @@ var createRestHook = function createRestHook(endpoint) {
         initialValue = options.initialValue,
         interval = options.interval,
         log = options.log,
+        _options$mergeOnCreat = options.mergeOnCreate,
+        mergeOnCreate = _options$mergeOnCreat === void 0 ? true : _options$mergeOnCreat,
+        _options$mergeOnUpdat = options.mergeOnUpdate,
+        mergeOnUpdate = _options$mergeOnUpdat === void 0 ? true : _options$mergeOnUpdat,
         mock = options.mock,
         onError = options.onError,
         _options$query = options.query,
@@ -166,7 +170,7 @@ var createRestHook = function createRestHook(endpoint) {
 
         isMounted && setIsLoading(true);
 
-        var resolve = function resolve() {
+        var resolve = function resolve(response) {
           try {
             isMounted && setIsLoading(false); // short circuit for non-collection calls
 
@@ -178,11 +182,13 @@ var createRestHook = function createRestHook(endpoint) {
             var newData = data;
 
             if (['update', 'replace'].includes(actionType)) {
+              item = mergeOnUpdate ? response.data || item : item;
               log && log('updating item in internal collection');
               newData = data.map(function (i) {
                 return getId(i) === itemId ? item : i;
               });
             } else if (actionType === 'create') {
+              item = mergeOnCreate ? response.data || item : item;
               log && log('adding item to internal collection');
               newData = [].concat(_toConsumableArray(data), [item]);
             } else if (actionType === 'remove') {

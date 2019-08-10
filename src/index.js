@@ -51,6 +51,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     initialValue,
     interval,
     log,
+    mergeOnCreate = true,
+    mergeOnUpdate = true,
     mock,
     onError,
     query = {},
@@ -108,7 +110,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     isMounted && setIsLoading(true)
 
-    const resolve = () => {
+    const resolve = (response) => {
       try {
         isMounted && setIsLoading(false)
 
@@ -121,9 +123,11 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         let newData = data
 
         if (['update', 'replace'].includes(actionType)) {
+          item = mergeOnUpdate ? (response.data || item) : item
           log && log('updating item in internal collection')
           newData = data.map(i => getId(i) === itemId ? item : i)
         } else if (actionType === 'create') {
+          item = mergeOnCreate ? (response.data || item) : item
           log && log('adding item to internal collection')
           newData = [...data, item]
         } else if (actionType === 'remove') {

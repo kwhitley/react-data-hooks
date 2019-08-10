@@ -61,6 +61,9 @@ export default function MyApp() {
     initialValue: []                // initial value of "data" return (typically [])
     interval: 5000,                 // refresh collection every 5000ms (5s),
     log: true                       // enable console.log output
+    mergeOnCreate: true             // use response payload for newly created items (default: true)
+    mergeOnUpdate: true             // use response payload for newly updated items (default: true)
+    log: true                       // enable console.log output
     mock: true,                     // only simulate POST/PUT/PATCH/DELETE actions (for testing)
     onError: console.warn           // do something custom with error events (e.g. toasts, logs, etc)
     persist: true,                  // will persist results to localStorage for fast delivery on page refresh
