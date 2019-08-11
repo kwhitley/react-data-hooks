@@ -136,7 +136,7 @@ var createRestHook = function createRestHook(endpoint) {
     var createActionType = function createActionType() {
       var actionOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       return function (item, oldItem) {
-        var itemId = getId(item);
+        var itemId = id || getId(item);
         var _actionOptions$action = actionOptions.actionType,
             actionType = _actionOptions$action === void 0 ? 'update' : _actionOptions$action,
             _actionOptions$method = actionOptions.method,

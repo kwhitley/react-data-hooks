@@ -75,7 +75,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   }
 
   const createActionType = (actionOptions = {}) => (item, oldItem) => {
-    let itemId = getId(item)
+    let itemId = id || getId(item)
     let {
       actionType = 'update',
       method = 'patch',
