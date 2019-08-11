@@ -47,7 +47,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     autoload = true,
     axios = defaultAxios,
     filter,
-    getId,
+    getId = item => id || item.id, // handles the use-case of non-collections (will use id if present)
     initialValue,
     interval,
     log,
@@ -58,9 +58,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     query = {},
     transform,
   } = options
-
-  // getId(item) is used to derive the endpoint for update/delete/replace actions
-  getId = getId || (item => item.id)
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
   initialValue = initialValue || (isCollection ? [] : undefined)

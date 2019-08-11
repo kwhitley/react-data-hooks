@@ -91,7 +91,10 @@ var createRestHook = function createRestHook(endpoint) {
         _options$axios = options.axios,
         axios = _options$axios === void 0 ? _axios["default"] : _options$axios,
         filter = options.filter,
-        getId = options.getId,
+        _options$getId = options.getId,
+        getId = _options$getId === void 0 ? function (item) {
+      return id || item.id;
+    } : _options$getId,
         initialValue = options.initialValue,
         interval = options.interval,
         log = options.log,
@@ -103,12 +106,7 @@ var createRestHook = function createRestHook(endpoint) {
         onError = options.onError,
         _options$query = options.query,
         query = _options$query === void 0 ? {} : _options$query,
-        transform = options.transform; // getId(item) is used to derive the endpoint for update/delete/replace actions
-
-    getId = getId || function (item) {
-      return item.id;
-    }; // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
-
+        transform = options.transform; // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
 
     initialValue = initialValue || (isCollection ? [] : undefined);
     var key = 'resthook:' + endpoint + JSON.stringify(args);
