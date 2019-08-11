@@ -47,7 +47,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     autoload = true,
     axios = defaultAxios,
     filter,
-    getId = item => id || item.id, // handles the use-case of non-collections (will use id if present)
+    getId = item => item.id, // handles the use-case of non-collections (will use id if present)
     initialValue,
     interval,
     log,
@@ -114,7 +114,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         // short circuit for non-collection calls
         if (!isCollection) {
           log && log(`non-collection action ${actionType}: setting data to`, item)
-          return isMounted && setData(item)
+          return isMounted && setData(mergeOnUpdate ? response.data : item)
         }
 
         let newData = data

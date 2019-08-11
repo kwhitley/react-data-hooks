@@ -93,7 +93,7 @@ var createRestHook = function createRestHook(endpoint) {
         filter = options.filter,
         _options$getId = options.getId,
         getId = _options$getId === void 0 ? function (item) {
-      return id || item.id;
+      return item.id;
     } : _options$getId,
         initialValue = options.initialValue,
         interval = options.interval,
@@ -174,7 +174,7 @@ var createRestHook = function createRestHook(endpoint) {
 
             if (!isCollection) {
               log && log("non-collection action ".concat(actionType, ": setting data to"), item);
-              return isMounted && setData(item);
+              return isMounted && setData(mergeOnUpdate ? response.data : item);
             }
 
             var newData = data;
