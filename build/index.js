@@ -174,6 +174,11 @@ var createRestHook = function createRestHook(endpoint) {
 
             if (!isCollection) {
               log && log("non-collection action ".concat(actionType, ": setting data to"), item);
+
+              if (actionType === 'remove') {
+                return isMounted && setData();
+              }
+
               return isMounted && setData(mergeOnUpdate ? response.data : item);
             }
 

@@ -114,6 +114,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         // short circuit for non-collection calls
         if (!isCollection) {
           log && log(`non-collection action ${actionType}: setting data to`, item)
+          if (actionType === 'remove') {
+            return isMounted && setData()
+          }
+
           return isMounted && setData(mergeOnUpdate ? response.data : item)
         }
 
