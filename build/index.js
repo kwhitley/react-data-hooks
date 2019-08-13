@@ -318,14 +318,10 @@ var createRestHook = function createRestHook(endpoint) {
 
 
     (0, _react.useEffect)(function () {
-      var loadingInterval;
+      autoload && load();
 
-      if (id || isCollection) {
-        autoload && load();
-
-        if (interval) {
-          loadingInterval = setInterval(load, interval);
-        }
+      if (interval) {
+        var loadingInterval = setInterval(load, interval);
       }
 
       return function () {

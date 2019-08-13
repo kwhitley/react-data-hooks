@@ -238,14 +238,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   // automatically load data upon component load and set up intervals, if defined
   useEffect(() => {
-    var loadingInterval
+    autoload && load()
 
-    if (id || isCollection) {
-      autoload && load()
-
-      if (interval) {
-        loadingInterval = setInterval(load, interval)
-      }
+    if (interval) {
+      var loadingInterval = setInterval(load, interval)
     }
 
     return () => {
