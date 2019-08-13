@@ -1,6 +1,8 @@
 # react-use-rest
 React.js data hooks for REST API endpoints
 ---
+[![npm version](https://badge.fury.io/js/react-use-rest.svg)](https://www.npmjs.com/package/react-use-rest)
+[![Build Status via Travis CI](https://travis-ci.org/kwhitley/react-use-rest.svg?branch=master)](https://travis-ci.org/kwhitley/react-use-rest)
 [![gzip size](https://img.badgesize.io/https://unpkg.com/react-use-rest?compression=gzip&style=flat-square)](https://unpkg.com/react-use-rest)
 
 # Installation
@@ -29,11 +31,11 @@ your endpoints, without needing advanced state management like redux/mobx.
 - [x] data is shared across components without context or prop-drilling, thanks to **[use-store-hook](https://www.npmjs.com/package/use-store-hook)**
 
 # Examples
-- ### [basic](#example-1)
-- ### [all options/returns (until documentation details all params)](#example-2)
-- ### [chained hooks (loading details dynamically)](#example-3)
-- ### [creating hooks from props (dynamic hook generation)](#example-4)
-- ### [handling 401/Unauthorized](#example-5)
+- **[basic](#example-1)**
+- **[all options/returns (until documentation details all params)](#example-2)**
+- **[chained hooks (loading details dynamically)](#example-3)**
+- **[creating hooks from props (dynamic hook generation)](#example-4)**
+- **[handling 401/Unauthorized](#example-5)**
 
 ---
 
@@ -61,7 +63,7 @@ export default function MyApp() {
 }
 ```
 
-### Example 2
+## Example 2
 **(all options/returns exposed)**
 ```js
 import React from 'react'
@@ -127,7 +129,7 @@ export default function MyApp() {
 }
 ```
 
-### Example 3
+## Example 3
 **(chained hooks, e.g. collection and item details)**
 ```js
 import React from 'react'
@@ -170,7 +172,7 @@ export default MyApp = () => {
 }
 ```
 
-### Example 4
+## Example 4
 **(generate and load hook dynamically from props)**
 ```js
 import React, { useState, useEffect } from 'react'
@@ -199,7 +201,7 @@ export const ViewCollectionItem = ({ collectionName, itemId }) => {
 }
 ```
 
-### Example 5
+## Example 5
 **(redirect to login on 401)**
 ```js
 import React from 'react'
