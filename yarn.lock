@@ -5747,10 +5747,10 @@ url-parse-lax@^3.0.0:
   dependencies:
     prepend-http "^2.0.0"
 
-use-store-hook@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/use-store-hook/-/use-store-hook-1.4.0.tgz#6e452c5da4c657f5532c232223e423738daaff59"
-  integrity sha512-iZiIaLeARNzFucq+9lDyGdFfzaxRbKsdZbce96QOf7OzYD3uPKWpLazv70qONN3gcYa+CrTNycdsr04+c81xGg==
+use-store-hook@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/use-store-hook/-/use-store-hook-1.4.1.tgz#92b630f5ad565b37673c3ddcb33f3f282d6b26fd"
+  integrity sha512-9Tt5DgwKOxKIfce4YWvl2GNNakCT6gesoERzyuDE+B706R7+C0WRZcPKDfAyIUhUX9hQhTCHTxZEnar1fYpsiw==
   dependencies:
     localstorify "^0.2.2"
 
@@ -6015,7 +6015,7 @@ yargs@^12.0.2:
     y18n "^3.2.1 || ^4.0.0"
     yargs-parser "^11.1.1"
 
-yarn-release@^1.10.2:
+yarn-release@^1.9.2:
   version "1.10.2"
   resolved "https://registry.yarnpkg.com/yarn-release/-/yarn-release-1.10.2.tgz#e656df245e1eb7e19da2d02b75765b803f436bfa"
   integrity sha512-b9JXsEsH2Q5mqtgPSnKoh3/zrwv9aMpeNJxcWvGhsWrofBIDk/brEQrBCB6w13LC5ev98fbKEenZpO0YxGG49w==

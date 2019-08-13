@@ -1,6 +1,6 @@
 {
   "name": "react-use-rest",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "description": "React.js data hooks for REST endpoints",
   "main": "index.js",
   "target": "esnext",
@@ -14,8 +14,15 @@
     "release:minor": "yarn release --minor",
     "release:patch": "yarn release --patch"
   },
+  "keywords": [
+    "react",
+    "hooks",
+    "api",
+    "rest",
+    "state"
+  ],
   "author": "Kevin R. Whitley <krwhitley@gmail.com>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/kwhitley/react-use-rest.git"
@@ -45,6 +52,6 @@
   "dependencies": {
     "axios": "^0.19.0",
     "deepmerge": "^4.0.0",
-    "use-store-hook": "^1.4.0"
+    "use-store-hook": "^1.4.1"
   }
 }
