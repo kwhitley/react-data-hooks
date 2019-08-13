@@ -154,13 +154,20 @@ var createRestHook = function createRestHook(endpoint) {
         error = _useState4[0],
         setError = _useState4[1];
 
-    var handleError = function handleError(error) {
+    var handleError = function handleError() {
+      var error = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      if (_typeof(error) === 'object') {
+        var message = error.message,
+            status = error.status;
+      }
+
       log && log('handleError executed', error);
       isMounted && setIsLoading(false);
-      isMounted && setError(error.message || error);
+      isMounted && setError(message || error);
       onError && onError(error); // handle authentication errors
 
-      if (onAuthenticationError && [401, 403].includes(error.status)) {
+      if (onAuthenticationError && [401, 403].includes(status)) {
         onAuthenticationError(error);
       }
     };

@@ -82,14 +82,17 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   let [ isLoading, setIsLoading ] = useState(autoload)
   let [ error, setError ] = useState(undefined)
 
-  const handleError = (error) => {
+  const handleError = (error = {}) => {
+    if (typeof error === 'object') {
+      var { message, status } = error
+    }
     log && log('handleError executed', error)
     isMounted && setIsLoading(false)
-    isMounted && setError(error.message || error)
+    isMounted && setError(message || error)
     onError && onError(error)
 
     // handle authentication errors
-    if (onAuthenticationError && ([401, 403]).includes(error.status)) {
+    if (onAuthenticationError && ([401, 403]).includes(status)) {
       onAuthenticationError(error)
     }
   }
