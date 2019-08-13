@@ -121,7 +121,7 @@ var createRestHook = function createRestHook(endpoint) {
         query = _options$query === void 0 ? {} : _options$query,
         transform = options.transform; // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
 
-    initialValue = initialValue || (isCollection ? [] : undefined);
+    initialValue = options.hasOwnProperty('initialValue') ? initialValue : isCollection ? [] : undefined;
     var key = 'resthook:' + endpoint + JSON.stringify(args);
 
     var _useStore = (0, _useStoreHook.useStore)(key, initialValue, options),

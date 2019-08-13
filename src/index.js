@@ -66,7 +66,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   } = options
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
-  initialValue = initialValue || (isCollection ? [] : undefined)
+  initialValue = options.hasOwnProperty('initialValue') ? initialValue : (isCollection ? [] : undefined)
 
   let key = 'resthook:' + endpoint + JSON.stringify(args)
   let [ data, setData ] = useStore(key, initialValue, options)

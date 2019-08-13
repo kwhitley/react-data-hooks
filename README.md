@@ -58,7 +58,7 @@ export default function MyApp() {
     autoload: true,                 // data will fire initial GET by default unless set to false,
     filter: item => item.age > 5,   // can client-side filter results (in case your API doesn't have filters),
     getId: item => item._id,        // tell the hook how to derive item ID from a collection item
-    initialValue: []                // initial value of "data" return (typically [])
+    initialValue: []                // initial value of "data" return (defaults to [] if collection assumed)
     interval: 5000,                 // refresh collection every 5000ms (5s),
     log: true                       // enable console.log output
     mergeOnCreate: true             // use response payload for newly created items (default: true)
