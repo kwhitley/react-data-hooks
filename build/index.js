@@ -68,15 +68,10 @@ var createRestHook = function createRestHook(endpoint) {
 
     var id = args[0],
         hookOptions = args[1];
-    var isCollection = true;
-    var isMounted = true; // for collections, clear id, and derive options from first param
+    var isMounted = true;
+    var idExplicitlyPassed = args.length && _typeof(args[0]) !== 'object';
 
-    if (id !== undefined && _typeof(id) !== 'object' && args.length) {
-      // e.g. useHook('foo') useHook(3) useHook(undefined)
-      isCollection = false;
-    } else if (id === undefined && args.length === 1) {
-      isCollection = false;
-    } else if (hookOptions === undefined) {
+    if (_typeof(id) === 'object' && hookOptions === undefined) {
       // e.g. useHook({ something })
       hookOptions = id; // use first param as options
 
@@ -97,6 +92,7 @@ var createRestHook = function createRestHook(endpoint) {
     } : _options$getId,
         initialValue = options.initialValue,
         interval = options.interval,
+        isCollection = options.isCollection,
         log = options.log,
         _options$onAuthentica = options.onAuthenticationError,
         onAuthenticationError = _options$onAuthentica === void 0 ? function () {} : _options$onAuthentica,
@@ -119,7 +115,26 @@ var createRestHook = function createRestHook(endpoint) {
         mock = options.mock,
         _options$query = options.query,
         query = _options$query === void 0 ? {} : _options$query,
-        transform = options.transform; // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
+        transform = options.transform; // if isCollection not explicitly set, try to derive from arguments
+
+    if (!options.hasOwnProperty('isCollection')) {
+      // for collections, clear id, and derive options from first param
+      if (idExplicitlyPassed) {
+        // e.g. useHook('foo') useHook(3)
+        isCollection = false;
+      } else {
+        isCollection = true;
+      }
+    }
+
+    log && log('creating hook', {
+      endpoint: endpoint,
+      id: id,
+      idExplicitlyPassed: idExplicitlyPassed,
+      isCollection: isCollection,
+      options: options,
+      args: args
+    }); // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
 
     initialValue = options.hasOwnProperty('initialValue') ? initialValue : isCollection ? [] : undefined;
     var key = 'resthook:' + endpoint + JSON.stringify(args);
@@ -271,7 +286,7 @@ var createRestHook = function createRestHook(endpoint) {
           transform = opt.transform; // if query param is a function, run it to derive up-to-date params
 
       query = typeof query === 'function' ? query() : query;
-      log && log({
+      log && log('GET', {
         endpoint: endpoint,
         query: query
       }); // only lock with loading when not pre-populated
@@ -284,7 +299,7 @@ var createRestHook = function createRestHook(endpoint) {
         var data = _ref.data;
 
         try {
-          log && log('payload data', data); // dig into nested payloads if required
+          log && log('GET RESPONSE:', data); // dig into nested payloads if required
 
           data = data.data || data;
 
@@ -318,10 +333,14 @@ var createRestHook = function createRestHook(endpoint) {
 
 
     (0, _react.useEffect)(function () {
-      autoload && load();
+      log && log('react-use-rest: [id] changed:', id);
 
-      if (interval) {
-        var loadingInterval = setInterval(load, interval);
+      if (isCollection || !idExplicitlyPassed || idExplicitlyPassed && id !== undefined) {
+        autoload && load();
+
+        if (interval) {
+          var loadingInterval = setInterval(load, interval);
+        }
       }
 
       return function () {

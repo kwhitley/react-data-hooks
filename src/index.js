@@ -24,16 +24,10 @@ const eventable = (fn) => (...args) => {
 
 export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
   let [ id, hookOptions ] = args
-  let isCollection = true
   let isMounted = true
+  let idExplicitlyPassed = args.length && typeof args[0] !== 'object'
 
-  // for collections, clear id, and derive options from first param
-  if (id !== undefined && typeof id !== 'object' && args.length) {
-    // e.g. useHook('foo') useHook(3) useHook(undefined)
-    isCollection = false
-  } else if (id === undefined && args.length === 1) {
-    isCollection = false
-  } else if (hookOptions === undefined) {
+  if (typeof id === 'object' && hookOptions === undefined) {
     // e.g. useHook({ something })
     hookOptions = id // use first param as options
     id = undefined
@@ -50,6 +44,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     getId = item => item.id, // handles the use-case of non-collections (will use id if present)
     initialValue,
     interval,
+    isCollection,
     log,
     onAuthenticationError = () => {},
     onCreate = () => {},
@@ -64,6 +59,20 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     query = {},
     transform,
   } = options
+
+  // if isCollection not explicitly set, try to derive from arguments
+  if (!options.hasOwnProperty('isCollection')) {
+    // for collections, clear id, and derive options from first param
+    if (idExplicitlyPassed) {
+      // e.g. useHook('foo') useHook(3)
+      isCollection = false
+    } else {
+      isCollection = true
+    }
+  }
+
+
+  log && log('creating hook', { endpoint, id, idExplicitlyPassed, isCollection, options, args })
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
   initialValue = options.hasOwnProperty('initialValue') ? initialValue : (isCollection ? [] : undefined)
@@ -192,7 +201,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     // if query param is a function, run it to derive up-to-date params
     query = typeof query === 'function' ? query() : query
 
-    log && log({ endpoint, query })
+    log && log('GET', { endpoint, query })
 
     // only lock with loading when not pre-populated
     !isLoading && isMounted && setIsLoading(true)
@@ -203,7 +212,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       .get(getEndpoint(endpoint, id), { params: query })
       .then(({ data }) => {
         try {
-          log && log('payload data', data)
+          log && log('GET RESPONSE:', data)
           // dig into nested payloads if required
           data = data.data || data
 
@@ -238,10 +247,14 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   // automatically load data upon component load and set up intervals, if defined
   useEffect(() => {
-    autoload && load()
+    log && log('react-use-rest: [id] changed:', id)
 
-    if (interval) {
-      var loadingInterval = setInterval(load, interval)
+    if (isCollection || !idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
+      autoload && load()
+
+      if (interval) {
+        var loadingInterval = setInterval(load, interval)
+      }
     }
 
     return () => {
