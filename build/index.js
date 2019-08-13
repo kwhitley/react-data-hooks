@@ -335,7 +335,7 @@ var createRestHook = function createRestHook(endpoint) {
     (0, _react.useEffect)(function () {
       log && log('react-use-rest: [id] changed:', id);
 
-      if (isCollection || !idExplicitlyPassed || idExplicitlyPassed && id !== undefined) {
+      if (!idExplicitlyPassed || idExplicitlyPassed && id !== undefined) {
         autoload && load();
 
         if (interval) {

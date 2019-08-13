@@ -249,7 +249,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   useEffect(() => {
     log && log('react-use-rest: [id] changed:', id)
 
-    if (isCollection || !idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
+    if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
       autoload && load()
 
       if (interval) {

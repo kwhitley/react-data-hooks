@@ -60,6 +60,7 @@ export default function MyApp() {
     getId: item => item._id,        // tell the hook how to derive item ID from a collection item
     initialValue: []                // initial value of "data" return (defaults to [] if collection assumed)
     interval: 5000,                 // refresh collection every 5000ms (5s),
+    isCollection: false             // set to false to allow direct REST against a specific endpoint
     log: true                       // enable console.log output
     mergeOnCreate: true             // use response payload for newly created items (default: true)
     mergeOnUpdate: true             // use response payload for newly updated items (default: true)
@@ -93,6 +94,76 @@ export default function MyApp() {
         ))
       }
     </ul>
+  )
+}
+```
+
+### Example 3 - Chained Hooks
+```js
+import React from 'react'
+import { createRestHook } from 'react-use-rest'
+
+// create a data hook
+const useKittens = createRestHook('/api/kittens') // any options may be included here for convenience
+
+export default MyApp = () => {
+  // quick tip: { persist: true } loads cached content at page load, then fires the GET and updates
+  // as necessary to prevent stale data
+  let { data: kittens } = useKittens({ persist: true })
+  let [ selectedKitten, setSelectedKitten ] = useState()
+
+  let { data: kittenDetails } = useKittens(selectedKitten, { log: console.log })
+
+  if (isLoading && !collections.length) {
+    return <p>Loading...</p>
+  }
+
+  return (
+    <div>
+      {
+        kittens.map(kitten =>
+          <button
+            key={kitten.id}
+            onClick={() => setSelectedKitten(kitten.id)}
+            >
+            { kitten.name }
+          </button>
+        )
+      }
+
+      <h1>Payload</h1>
+      {
+        JSON.stringify(kittenDetails, 2, null) // will reload whenever selectedKitten changes
+      }
+    </div>
+  )
+}
+```
+
+### Example 4 - Generate And Load Hook From Props
+```js
+import React, { useState, useEffect } from 'react'
+import { createRestHook } from 'react-use-rest'
+
+const useCollectionItems = (collectionName = '') => createRestHook(`/api/${collectionName}`)
+
+export const ViewCollectionItem = ({ collectionName, itemId }) => {
+  console.log('viewing collection item', itemId, 'in', collectionName)
+
+  // { collectionName: 'kittens', itemId: 3 } will generate a dynamic hook
+  // with endpoint '/api/kittens', and passing in the itemId, will load the hook as an item
+  // with endpoint '/api/kittens/3'
+
+  let { data: item } = useCollectionItems(collectionName)(itemId, { persist: true })
+
+  return (
+    <div>
+      {
+        item
+        ? JSON.stringify(item, null, 2)
+        : null
+      }
+    </div>
   )
 }
 ```
