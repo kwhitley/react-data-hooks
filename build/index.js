@@ -160,6 +160,11 @@ var createRestHook = function createRestHook(endpoint) {
       if (_typeof(error) === 'object') {
         var message = error.message,
             status = error.status;
+
+        if (error.response) {
+          status = error.response.status;
+          message = error.response.data;
+        }
       }
 
       log && log('handleError executed', error);

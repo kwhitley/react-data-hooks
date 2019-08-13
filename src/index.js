@@ -85,7 +85,13 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   const handleError = (error = {}) => {
     if (typeof error === 'object') {
       var { message, status } = error
+
+      if (error.response) {
+        status = error.response.status
+        message = error.response.data
+      }
     }
+
     log && log('handleError executed', error)
     isMounted && setIsLoading(false)
     isMounted && setError(message || error)
