@@ -8,6 +8,26 @@ React.js data hooks for REST API endpoints
 yarn add react-use-rest
 ```
 
+# What It Does
+React hooks are awesome, but loading and managing API endpoints can still be a pain.  With
+`createRestHook(endpoint, options)`, you get a simple, yet powerful way to communicate with
+your endpoints, without needing advanced state management like redux/mobx.
+
+**react-use-rest** hook supports the following features:
+
+- [x] auto-loading
+- [x] complete REST (GET/POST/PUT/PATCH/DELETE)
+- [x] collections, items in collections, or fixed endpoints
+- [x] polling
+- [x] transforming payloads
+- [x] filtering payload results
+- [x] queries (static via object, or dynamic via function)
+- [x] collections self-maintain after POST/PUT/PATCH/DELETE
+- [x] event handling for errors, after responses, and on authentication failures
+- [x] specify how to derive id from collection items (used to generate endpoints like /api/items/3)
+- [x] persist non-sensitive results to prevent load time waits (while still updating after fetch)
+- [x] hook data is shared across components without context or prop-drilling, thanks to the super-simple **[use-store-hook](https://www.npmjs.com/package/use-store-hook)**
+
 # Example Usage
 
 ### Example 1, loads collection
@@ -162,6 +182,34 @@ export const ViewCollectionItem = ({ collectionName, itemId }) => {
         item
         ? JSON.stringify(item, null, 2)
         : null
+      }
+    </div>
+  )
+}
+```
+
+### Example 5, Redirect to login on 401
+```js
+import React from 'react'
+import { createRestHook } from 'react-use-rest'
+
+// create a data hook that might see a 401/Unauthorized
+const useKittens = createRestHook('/api/kittens', {
+  onAuthenticationError: (err) => window.location.href = '/login?returnTo=' + encodeURIComponent(window.location.href),
+})
+
+export default function MyApp() {
+  let { data } = useKittens()
+
+  // if loading /api/kittens would fire a 401, the app
+  // redirects to /login with enough info to return once logged in
+
+  return (
+    <div>
+      {
+        isLoading
+        ? 'loading kittens...'
+        : `we found ${data.length} kittens!`
       }
     </div>
   )
