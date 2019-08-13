@@ -51,10 +51,16 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     initialValue,
     interval,
     log,
+    onAuthenticationError = () => {},
+    onCreate = () => {},
+    onError = () => {},
+    onLoad = () => {},
+    onRemove = () => {},
+    onReplace = () => {},
+    onUpdate = () => {},
     mergeOnCreate = true,
     mergeOnUpdate = true,
     mock,
-    onError,
     query = {},
     transform,
   } = options
@@ -64,14 +70,19 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   let key = 'resthook:' + endpoint + JSON.stringify(args)
   let [ data, setData ] = useStore(key, initialValue, options)
-  let [ isLoading, setIsLoading ] = useState(false)
+  let [ isLoading, setIsLoading ] = useState(autoload)
   let [ error, setError ] = useState(undefined)
 
   const handleError = (error) => {
-    log && log('handleError executed')
+    log && log('handleError executed', error)
     isMounted && setIsLoading(false)
     isMounted && setError(error.message || error)
     onError && onError(error)
+
+    // handle authentication errors
+    if (onAuthenticationError && ([401, 403]).includes(error.status)) {
+      onAuthenticationError(error)
+    }
   }
 
   const createActionType = (actionOptions = {}) => (item, oldItem) => {
@@ -82,6 +93,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     } = actionOptions
     let payload = undefined
 
+    console.log(actionType.toUpperCase(), 'on', item, 'with id', itemId)
     if (!itemId && actionType !== 'create') {
       return autoReject(`Could not ${actionType} item (see log)`, {
         fn: () => {
@@ -118,7 +130,11 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
             return isMounted && setData()
           }
 
-          return isMounted && setData(mergeOnUpdate ? response.data : item)
+          let updated = mergeOnUpdate ? response.data : item
+
+          onUpdate && onUpdate(item)
+
+          return isMounted && setData(updated)
         }
 
         let newData = data
@@ -127,13 +143,20 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           item = mergeOnUpdate ? (response.data || item) : item
           log && log('updating item in internal collection')
           newData = data.map(i => getId(i) === itemId ? item : i)
+
+          actionType === 'replace' && onReplace && onReplace(item)
+          actionType === 'update' && onUpdate && onUpdate(item)
         } else if (actionType === 'create') {
           item = mergeOnCreate ? (response.data || item) : item
           log && log('adding item to internal collection')
           newData = [...data, item]
+
+          onCreate && onCreate(item)
         } else if (actionType === 'remove') {
           log && log('deleting item from internal collection')
           newData = data.filter(i => getId(i) !== itemId)
+
+          onRemove && onRemove(item)
         }
 
         // update internal data
@@ -153,7 +176,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     return axios[method](getEndpoint(endpoint, itemId), payload)
       .then(resolve)
-      .catch(handleError)
+      .catch((err) => handleError(err.response))
   }
 
   const update = createActionType({ actionType: 'update', method: 'patch' })
@@ -196,14 +219,21 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
             }
           }
 
-          isMounted && setData(data)
-          isMounted && setIsLoading(false)
+          if (isMounted) {
+            setData(data)
+            setIsLoading(false)
+            onLoad && onLoad(data)
+          }
         } catch (err) {
           onError && onError(err)
           isMounted && setError(err.message)
         }
       })
-      .catch(handleError)
+      .catch((err) => {
+        handleError(err.response)
+        setError(err.message)
+        setData(initialValue)
+      })
   }
 
   // automatically load data upon component load and set up intervals, if defined

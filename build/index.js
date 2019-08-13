@@ -98,12 +98,25 @@ var createRestHook = function createRestHook(endpoint) {
         initialValue = options.initialValue,
         interval = options.interval,
         log = options.log,
+        _options$onAuthentica = options.onAuthenticationError,
+        onAuthenticationError = _options$onAuthentica === void 0 ? function () {} : _options$onAuthentica,
+        _options$onCreate = options.onCreate,
+        onCreate = _options$onCreate === void 0 ? function () {} : _options$onCreate,
+        _options$onError = options.onError,
+        onError = _options$onError === void 0 ? function () {} : _options$onError,
+        _options$onLoad = options.onLoad,
+        onLoad = _options$onLoad === void 0 ? function () {} : _options$onLoad,
+        _options$onRemove = options.onRemove,
+        onRemove = _options$onRemove === void 0 ? function () {} : _options$onRemove,
+        _options$onReplace = options.onReplace,
+        onReplace = _options$onReplace === void 0 ? function () {} : _options$onReplace,
+        _options$onUpdate = options.onUpdate,
+        onUpdate = _options$onUpdate === void 0 ? function () {} : _options$onUpdate,
         _options$mergeOnCreat = options.mergeOnCreate,
         mergeOnCreate = _options$mergeOnCreat === void 0 ? true : _options$mergeOnCreat,
         _options$mergeOnUpdat = options.mergeOnUpdate,
         mergeOnUpdate = _options$mergeOnUpdat === void 0 ? true : _options$mergeOnUpdat,
         mock = options.mock,
-        onError = options.onError,
         _options$query = options.query,
         query = _options$query === void 0 ? {} : _options$query,
         transform = options.transform; // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
@@ -116,7 +129,7 @@ var createRestHook = function createRestHook(endpoint) {
         data = _useStore2[0],
         setData = _useStore2[1];
 
-    var _useState = (0, _react.useState)(false),
+    var _useState = (0, _react.useState)(autoload),
         _useState2 = _slicedToArray(_useState, 2),
         isLoading = _useState2[0],
         setIsLoading = _useState2[1];
@@ -127,10 +140,14 @@ var createRestHook = function createRestHook(endpoint) {
         setError = _useState4[1];
 
     var handleError = function handleError(error) {
-      log && log('handleError executed');
+      log && log('handleError executed', error);
       isMounted && setIsLoading(false);
       isMounted && setError(error.message || error);
-      onError && onError(error);
+      onError && onError(error); // handle authentication errors
+
+      if (onAuthenticationError && [401, 403].includes(error.status)) {
+        onAuthenticationError(error);
+      }
     };
 
     var createActionType = function createActionType() {
@@ -142,6 +159,7 @@ var createRestHook = function createRestHook(endpoint) {
             _actionOptions$method = actionOptions.method,
             method = _actionOptions$method === void 0 ? 'patch' : _actionOptions$method;
         var payload = undefined;
+        console.log(actionType.toUpperCase(), 'on', item, 'with id', itemId);
 
         if (!itemId && actionType !== 'create') {
           return (0, _utils.autoReject)("Could not ".concat(actionType, " item (see log)"), {
@@ -179,7 +197,9 @@ var createRestHook = function createRestHook(endpoint) {
                 return isMounted && setData();
               }
 
-              return isMounted && setData(mergeOnUpdate ? response.data : item);
+              var updated = mergeOnUpdate ? response.data : item;
+              onUpdate && onUpdate(item);
+              return isMounted && setData(updated);
             }
 
             var newData = data;
@@ -190,15 +210,19 @@ var createRestHook = function createRestHook(endpoint) {
               newData = data.map(function (i) {
                 return getId(i) === itemId ? item : i;
               });
+              actionType === 'replace' && onReplace && onReplace(item);
+              actionType === 'update' && onUpdate && onUpdate(item);
             } else if (actionType === 'create') {
               item = mergeOnCreate ? response.data || item : item;
               log && log('adding item to internal collection');
               newData = [].concat(_toConsumableArray(data), [item]);
+              onCreate && onCreate(item);
             } else if (actionType === 'remove') {
               log && log('deleting item from internal collection');
               newData = data.filter(function (i) {
                 return getId(i) !== itemId;
               });
+              onRemove && onRemove(item);
             } // update internal data
 
 
@@ -217,7 +241,9 @@ var createRestHook = function createRestHook(endpoint) {
           });
         }
 
-        return axios[method](getEndpoint(endpoint, itemId), payload).then(resolve)["catch"](handleError);
+        return axios[method](getEndpoint(endpoint, itemId), payload).then(resolve)["catch"](function (err) {
+          return handleError(err.response);
+        });
       };
     };
 
@@ -274,13 +300,20 @@ var createRestHook = function createRestHook(endpoint) {
             }
           }
 
-          isMounted && setData(data);
-          isMounted && setIsLoading(false);
+          if (isMounted) {
+            setData(data);
+            setIsLoading(false);
+            onLoad && onLoad(data);
+          }
         } catch (err) {
           onError && onError(err);
           isMounted && setError(err.message);
         }
-      })["catch"](handleError);
+      })["catch"](function (err) {
+        handleError(err.response);
+        setError(err.message);
+        setData(initialValue);
+      });
     }; // automatically load data upon component load and set up intervals, if defined
 
 

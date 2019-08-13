@@ -63,6 +63,13 @@ export default function MyApp() {
     log: true                       // enable console.log output
     mergeOnCreate: true             // use response payload for newly created items (default: true)
     mergeOnUpdate: true             // use response payload for newly updated items (default: true)
+    onAuthenticationError: (err) => {},  // fired when calls return 401 or 403 (can redirect, etc)
+    onCreate: (err) => {},          // fired when item is created successfully
+    onError: (err) => {},           // fired on internal error, or response errors
+    onLoad: (data) => {},           // fired when data is loaded successfully
+    onRemove: (item) => {},         // fired when item is deleted successfully
+    onReplace: (item) => {},        // fired when item is replaced successfully
+    onUpdate: (item) => {},         // fired when item is updated successfully
     log: true                       // enable console.log output
     mock: true,                     // only simulate POST/PUT/PATCH/DELETE actions (for testing)
     onError: console.warn           // do something custom with error events (e.g. toasts, logs, etc)
