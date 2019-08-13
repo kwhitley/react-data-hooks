@@ -9,11 +9,11 @@ yarn add react-use-rest
 ```
 
 # What It Does
-React hooks are awesome, but loading and managing API endpoints can still be a pain.  With
-`createRestHook(endpoint, options)`, you get a simple, yet powerful way to communicate with
+React hooks are awesome, but loading and managing API endpoints can still be a pain.  This library exports a single named
+function, `createRestHook(endpoint, options)`, which allows you to create a simple, yet powerful way to communicate with
 your endpoints, without needing advanced state management like redux/mobx.
 
-**react-use-rest** hook supports the following features:
+### Features
 
 - [x] auto-loading
 - [x] complete REST (GET/POST/PUT/PATCH/DELETE)
@@ -26,11 +26,19 @@ your endpoints, without needing advanced state management like redux/mobx.
 - [x] event handling for errors, after responses, and on authentication failures
 - [x] specify how to derive id from collection items (used to generate endpoints like /api/items/3)
 - [x] persist non-sensitive results to prevent load time waits (while still updating after fetch)
-- [x] hook data is shared across components without context or prop-drilling, thanks to the super-simple **[use-store-hook](https://www.npmjs.com/package/use-store-hook)**
+- [x] data is shared across components without context or prop-drilling, thanks to **[use-store-hook](https://www.npmjs.com/package/use-store-hook)**
 
-# Example Usage
+# Examples
+- ### [basic](#example-1)
+- ### [all options/returns (until documentation details all params)](#example-2)
+- ### [chained hooks (loading details dynamically)](#example-3)
+- ### [creating hooks from props (dynamic hook generation)](#example-4)
+- ### [handling 401/Unauthorized](#example-5)
 
-### Example 1, loads collection
+---
+
+## Example 1
+**(basic usage)**
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
@@ -53,7 +61,8 @@ export default function MyApp() {
 }
 ```
 
-### Example 2 (all options/returns exposed)
+### Example 2
+**(all options/returns exposed)**
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
@@ -118,7 +127,8 @@ export default function MyApp() {
 }
 ```
 
-### Example 3 - Chained Hooks
+### Example 3
+**(chained hooks, e.g. collection and item details)**
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
@@ -160,7 +170,8 @@ export default MyApp = () => {
 }
 ```
 
-### Example 4 - Generate And Load Hook From Props
+### Example 4
+**(generate and load hook dynamically from props)**
 ```js
 import React, { useState, useEffect } from 'react'
 import { createRestHook } from 'react-use-rest'
@@ -188,7 +199,8 @@ export const ViewCollectionItem = ({ collectionName, itemId }) => {
 }
 ```
 
-### Example 5, Redirect to login on 401
+### Example 5
+**(redirect to login on 401)**
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
