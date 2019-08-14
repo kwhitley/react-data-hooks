@@ -49,14 +49,14 @@ import { createRestHook } from 'react-use-rest'
 const useKittens = createRestHook('/api/kittens')
 
 export default function MyApp() {
-  let { data = [], isLoading, error } = useKittens()
+  let { data: kittens, isLoading } = useKittens() // use it
 
   return (
     <div>
       {
         isLoading
         ? 'loading kittens...'
-        : `we found ${data.length} kittens!`
+        : `we found ${kittens.length} kittens!`
       }
     </div>
   )
@@ -144,7 +144,7 @@ export default MyApp = () => {
   let { data: kittens } = useKittens({ persist: true })
   let [ selectedKitten, setSelectedKitten ] = useState()
 
-  let { data: kittenDetails } = useKittens(selectedKitten, { log: console.log })
+  let { data: kittenDetails } = useKittens(selectedKitten)
 
   if (isLoading && !collections.length) {
     return <p>Loading...</p>
@@ -178,6 +178,7 @@ export default MyApp = () => {
 import React, { useState, useEffect } from 'react'
 import { createRestHook } from 'react-use-rest'
 
+// create a curried function to dynamically return a data hook from a collection name
 const useCollectionItems = (collectionName = '') => createRestHook(`/api/${collectionName}`)
 
 export const ViewCollectionItem = ({ collectionName, itemId }) => {
@@ -187,13 +188,13 @@ export const ViewCollectionItem = ({ collectionName, itemId }) => {
   // with endpoint '/api/kittens', and passing in the itemId, will load the hook as an item
   // with endpoint '/api/kittens/3'
 
-  let { data: item } = useCollectionItems(collectionName)(itemId, { persist: true })
+  let { data: itemDetails } = useCollectionItems(collectionName)(itemId)
 
   return (
     <div>
       {
         item
-        ? JSON.stringify(item, null, 2)
+        ? JSON.stringify(itemDetails, null, 2)
         : null
       }
     </div>
