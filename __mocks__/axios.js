@@ -5,6 +5,7 @@ export const COLLECTION_ENDPOINT = 'collection_endpoint'
 export const ITEM_ENDPOINT = 'item_endpoint'
 
 export const generateItem = () => ({
+  id: faker.random.uuid(),
   firstName: faker.name.firstName(),
   lastName: faker.name.lastName(),
   description: faker.lorem.paragraph(),
@@ -26,11 +27,14 @@ export default {
       data: responseMap.get(endpoint),
     })
   ),
-  post: jest.fn((endpoint, payload) =>
-    Promise.resolve({
+  post: jest.fn((endpoint, payload) => {
+    if (!payload.id) {
+      payload.id = faker.random.uuid()
+    }
+    return Promise.resolve({
       data: { ...payload },
     })
-  ),
+  }),
   patch: jest.fn((endpoint, payload) =>
     Promise.resolve({
       data: { ...responseMap.get(ITEM_ENDPOINT), ...payload },
