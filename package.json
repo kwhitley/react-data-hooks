@@ -41,7 +41,10 @@
     "@babel/preset-react": "^7.0.0",
     "@testing-library/react-hooks": "^2.0.1",
     "faker": "^4.1.0",
+    "husky": "^3.0.3",
     "jest": "^24.8.0",
+    "prettier": "^1.18.2",
+    "pretty-quick": "^1.11.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-test-renderer": "^16.8.6",
@@ -55,5 +58,10 @@
     "axios": "^0.19.0",
     "deepmerge": "^4.0.0",
     "use-store-hook": "^1.4.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
   }
 }
