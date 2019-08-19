@@ -6,7 +6,7 @@ import {
   objectFilter,
   autoResolve,
   autoReject,
-  getPatch
+  getPatch,
 } from './utils'
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
@@ -45,7 +45,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     initialValue,
     interval,
     isCollection,
-    log,
+    log = v => v,
     onAuthenticationError = () => {},
     onCreate = () => {},
     onError = () => {},
@@ -57,22 +57,17 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     mergeOnUpdate = true,
     mock,
     query = {},
-    transform,
+    transform = v => v, // transforms all payloads (e.g. { response: { data: {} } })
+    transformItem = v => v, // transforms any non-collection payload (e.g. return from PATCH)
+    transformCollection = v => v, // transforms collection payload (e.g. return from GET without id)
   } = options
 
   // if isCollection not explicitly set, try to derive from arguments
   if (!options.hasOwnProperty('isCollection')) {
-    // for collections, clear id, and derive options from first param
-    if (idExplicitlyPassed) {
-      // e.g. useHook('foo') useHook(3)
-      isCollection = false
-    } else {
-      isCollection = true
-    }
+    isCollection = !idExplicitlyPassed
   }
 
-
-  log && log('creating hook', { endpoint, id, idExplicitlyPassed, isCollection, options, args })
+  log('creating hook', { endpoint, id, idExplicitlyPassed, isCollection, options, args })
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
   initialValue = options.hasOwnProperty('initialValue') ? initialValue : (isCollection ? [] : undefined)
@@ -92,13 +87,13 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       }
     }
 
-    log && log('handleError executed', error)
+    log('handleError executed', error)
     isMounted && setIsLoading(false)
     isMounted && setError(message || error)
-    onError && onError(error)
+    onError(error)
 
     // handle authentication errors
-    if (onAuthenticationError && ([401, 403]).includes(status)) {
+    if (onAuthenticati([401, 403]).includes(status)) {
       onAuthenticationError(error)
     }
   }
@@ -141,51 +136,61 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       try {
         isMounted && setIsLoading(false)
 
-        // short circuit for non-collection calls
+        let newData = data // set newData to current data set for collection operations
+        let newDataItem = transformItem(transform(response.data)) // prefill item to transformed response
+
+        // short circuit for non-collection hooks
         if (!isCollection) {
-          log && log(`non-collection action ${actionType}: setting data to`, item)
+          let updated // define placeholder
+
+          log(`non-collection action ${actionType}: setting data to`, item)
+
           if (actionType === 'remove') {
             return isMounted && setData()
           }
 
-          let updated = mergeOnUpdate ? response.data : item
+          if (actionType !== 'create') {
+            newDataItem = mergeOnUpdate ? newDataItem : item // PUT, PATCH
+            actionType === 'create' && onReplace(newDataItem)
+          } else {
+            newDataItem = mergeOnCreate ? newDataItem : item // POST
 
-          onUpdate && onUpdate(item)
+            actionType === 'replace' && onReplace(newDataItem)
+            actionType === 'update' && onUpdate(newDataItem)
+          }
 
-          return isMounted && setData(updated)
+          return isMounted && setData(newDataItem)
         }
-
-        let newData = data
 
         if (['update', 'replace'].includes(actionType)) {
-          item = mergeOnUpdate ? (response.data || item) : item
-          log && log('updating item in internal collection')
+          item = mergeOnUpdate ? newDataItem : item
+          log('updating item in internal collection')
           newData = data.map(i => getId(i) === itemId ? item : i)
 
-          actionType === 'replace' && onReplace && onReplace(item)
-          actionType === 'update' && onUpdate && onUpdate(item)
+          actionType === 'replace' && onReplace(item)
+          actionType === 'update' && onUpdate(item)
         } else if (actionType === 'create') {
-          item = mergeOnCreate ? (response.data || item) : item
-          log && log('adding item to internal collection')
+          item = mergeOnCreate ? newDataItem : item
+          log('adding item to internal collection')
           newData = [...data, item]
 
-          onCreate && onCreate(item)
+          onCreate(item)
         } else if (actionType === 'remove') {
-          log && log('deleting item from internal collection')
+          log('deleting item from internal collection')
           newData = data.filter(i => getId(i) !== itemId)
 
-          onRemove && onRemove(item)
+          onRemove(item)
         }
 
-        // update internal data
+        // update internal collection data
         isMounted && setData(newData)
       } catch (err) {
-        onError && onError(err)
+        onError(err)
         isMounted && setError(err.message)
       }
     }
 
-    log && log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)
+    log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)
 
     // mock exit for success
     if (mock) {
@@ -210,7 +215,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     // if query param is a function, run it to derive up-to-date params
     query = typeof query === 'function' ? query() : query
 
-    log && log('GET', { endpoint, query })
+    log('GET', { endpoint, query })
 
     // only lock with loading when not pre-populated
     !isLoading && isMounted && setIsLoading(true)
@@ -221,13 +226,11 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       .get(getEndpoint(endpoint, id), { params: query })
       .then(({ data }) => {
         try {
-          log && log('GET RESPONSE:', data)
-          // dig into nested payloads if required
-          data = data.data || data
+          let data = transform(data) // transform payload
 
-          if (transform) {
-            data = transform(data)
-          }
+          data = isCollection
+          ? transformCollection(data)
+          : transformItem(data)
 
           if (filter) {
             if (typeof filter === 'function') {
@@ -240,10 +243,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           if (isMounted) {
             setData(data)
             setIsLoading(false)
-            onLoad && onLoad(data)
+            onLoad(data)
           }
         } catch (err) {
-          onError && onError(err)
+          onError(err)
           isMounted && setError(err.message)
         }
       })
@@ -256,7 +259,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   // automatically load data upon component load and set up intervals, if defined
   useEffect(() => {
-    log && log('react-use-rest: [id] changed:', id)
+    log('react-use-rest: [id] changed:', id)
 
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
       autoload && load()
@@ -268,7 +271,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     return () => {
       if (loadingInterval) {
-        log && log('clearing load() interval', { interval })
+        log('clearing load() interval', { interval })
         clearInterval(loadingInterval)
       }
 

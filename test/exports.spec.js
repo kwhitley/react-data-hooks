@@ -1,5 +1,5 @@
 import { renderHook, cleanup, act, unmount } from '@testing-library/react-hooks'
-import { createRestHook } from '../src'
+import { createRestHook } from '../build'
 
 describe('react-use-rest', () => {
   describe('EXPORTS', () => {
