@@ -377,7 +377,28 @@ var createRestHook = function createRestHook(endpoint) {
       var loadOptions =
         arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
       var opt = (0, _deepmerge['default'])(options, loadOptions)
-      var query = opt.query // if query param is a function, run it to derive up-to-date params
+      var query = opt.query,
+        _opt$transform = opt.transform,
+        transform =
+          _opt$transform === void 0
+            ? function(v) {
+                return v.data || v
+              }
+            : _opt$transform,
+        _opt$transformItem = opt.transformItem,
+        transformItem =
+          _opt$transformItem === void 0
+            ? function(v) {
+                return v
+              }
+            : _opt$transformItem,
+        _opt$transformCollect = opt.transformCollection,
+        transformCollection =
+          _opt$transformCollect === void 0
+            ? function(v) {
+                return v
+              }
+            : _opt$transformCollect // if query param is a function, run it to derive up-to-date params
 
       query = typeof query === 'function' ? query() : query
       log('GET', {
