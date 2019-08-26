@@ -222,12 +222,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   // data load function
   const load = (loadOptions = {}) => {
     let opt = deepmerge(options, loadOptions)
-    let {
-      query,
-      transform = v => v.data || v,
-      transformItem = v => v,
-      transformCollection = v => v,
-    } = opt
+    let { query } = opt
 
     // if query param is a function, run it to derive up-to-date params
     query = typeof query === 'function' ? query() : query
