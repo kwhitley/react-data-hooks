@@ -54,7 +54,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     mergeOnUpdate = true,
     mock,
     query = {},
-    transform = v => v.data || v,
+    transform = v => v,
     transformCollection = v => v,
     transformItem = v => v,
   } = options

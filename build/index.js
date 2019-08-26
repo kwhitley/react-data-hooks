@@ -140,7 +140,7 @@ var createRestHook = function createRestHook(endpoint) {
       transform =
         _options$transform === void 0
           ? function(v) {
-              return v.data || v
+              return v
             }
           : _options$transform,
       _options$transformCol = options.transformCollection,
