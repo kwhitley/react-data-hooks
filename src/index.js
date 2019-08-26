@@ -45,7 +45,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     log = () => {},
     onAuthenticationError = () => {},
     onCreate = () => {},
-    onError = () => {},
+    onError = console.error,
     onLoad = () => {},
     onRemove = () => {},
     onReplace = () => {},

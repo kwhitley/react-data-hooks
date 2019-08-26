@@ -115,7 +115,7 @@ var createRestHook = function createRestHook(endpoint) {
       onCreate =
         _options$onCreate === void 0 ? function() {} : _options$onCreate,
       _options$onError = options.onError,
-      onError = _options$onError === void 0 ? function() {} : _options$onError,
+      onError = _options$onError === void 0 ? console.error : _options$onError,
       _options$onLoad = options.onLoad,
       onLoad = _options$onLoad === void 0 ? function() {} : _options$onLoad,
       _options$onRemove = options.onRemove,
