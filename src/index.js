@@ -2,18 +2,13 @@ import { useState, useEffect } from 'react'
 import { useStore } from 'use-store-hook'
 import defaultAxios from 'axios'
 import deepmerge from 'deepmerge'
-import {
-  objectFilter,
-  autoResolve,
-  autoReject,
-  getPatch
-} from './utils'
+import { objectFilter, autoResolve, autoReject, getPatch } from './utils'
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
 
 // helper function to handle functions that may be passed a DOM event
-const eventable = (fn) => (...args) => {
+const eventable = fn => (...args) => {
   let arg0 = args[0] || {}
   if (arg0.nativeEvent instanceof Event) {
     return fn()
@@ -22,8 +17,10 @@ const eventable = (fn) => (...args) => {
   return fn(...args)
 }
 
-export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
-  let [ id, hookOptions ] = args
+export const createRestHook = (endpoint, createHookOptions = {}) => (
+  ...args
+) => {
+  let [id, hookOptions] = args
   let isMounted = true
   let idExplicitlyPassed = args.length && typeof args[0] !== 'object'
 
@@ -45,7 +42,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     initialValue,
     interval,
     isCollection,
-    log,
+    log = () => {},
     onAuthenticationError = () => {},
     onCreate = () => {},
     onError = () => {},
@@ -57,7 +54,9 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     mergeOnUpdate = true,
     mock,
     query = {},
-    transform,
+    transform = v => v,
+    transformCollection = v => v,
+    transformItem = v => v,
   } = options
 
   // if isCollection not explicitly set, try to derive from arguments
@@ -71,16 +70,29 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     }
   }
 
+  // allow { log: true } alias as well as routing to custom loggers
+  log = log === true ? console.log : log
 
-  log && log('creating hook', { endpoint, id, idExplicitlyPassed, isCollection, options, args })
+  log('creating hook', {
+    endpoint,
+    id,
+    idExplicitlyPassed,
+    isCollection,
+    options,
+    args,
+  })
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
-  initialValue = options.hasOwnProperty('initialValue') ? initialValue : (isCollection ? [] : undefined)
+  initialValue = options.hasOwnProperty('initialValue')
+    ? initialValue
+    : isCollection
+    ? []
+    : undefined
 
   let key = 'resthook:' + endpoint + JSON.stringify(args)
-  let [ data, setData ] = useStore(key, initialValue, options)
-  let [ isLoading, setIsLoading ] = useState(autoload)
-  let [ error, setError ] = useState(undefined)
+  let [data, setData] = useStore(key, initialValue, options)
+  let [isLoading, setIsLoading] = useState(autoload)
+  let [error, setError] = useState(undefined)
 
   const handleError = (error = {}) => {
     if (typeof error === 'object') {
@@ -92,31 +104,28 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       }
     }
 
-    log && log('handleError executed', error)
+    log('handleError executed', error)
     isMounted && setIsLoading(false)
     isMounted && setError(message || error)
-    onError && onError(error)
+    onError(error) // event
 
     // handle authentication errors
-    if (onAuthenticationError && ([401, 403]).includes(status)) {
+    if (onAuthenticationError && [401, 403].includes(status)) {
       onAuthenticationError(error)
     }
   }
 
   const createActionType = (actionOptions = {}) => (item, oldItem) => {
     let itemId = id || getId(item)
-    let {
-      actionType = 'update',
-      method = 'patch',
-    } = actionOptions
+    let { actionType = 'update', method = 'patch' } = actionOptions
     let payload = undefined
 
-    console.log(actionType.toUpperCase(), 'on', item, 'with id', itemId)
+    log(actionType.toUpperCase(), 'on', item, 'with id', itemId)
     if (!itemId && actionType !== 'create') {
       return autoReject(`Could not ${actionType} item (see log)`, {
         fn: () => {
           console.error('option.getId(item) did not return a valid ID', item)
-        }
+        },
       })
     }
 
@@ -133,59 +142,69 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     if (actionType === 'create') {
       payload = item
+      itemId = undefined // don't build a collection/:id endpoint from item itself during POST
     }
 
     isMounted && setIsLoading(true)
 
-    const resolve = (response) => {
+    const resolve = response => {
       try {
         isMounted && setIsLoading(false)
 
+        let newData = transform(response.data)
+        log('AFTER transform:', newData)
+
+        // if collection, transform as collection
+        newData = isCollection
+          ? transformCollection(newData)
+          : transformItem(newData)
+        log(`AFTER transform${isCollection ? 'Collection' : 'Item'}:`, newData)
+
         // short circuit for non-collection calls
         if (!isCollection) {
-          log && log(`non-collection action ${actionType}: setting data to`, item)
+          log(`non-collection action ${actionType}: setting data to`, item)
           if (actionType === 'remove') {
             return isMounted && setData()
           }
 
-          let updated = mergeOnUpdate ? response.data : item
+          let updated = mergeOnUpdate ? deepmerge(item, newData) : item
 
-          onUpdate && onUpdate(item)
+          onUpdate(updated) // event
 
           return isMounted && setData(updated)
         }
 
-        let newData = data
-
         if (['update', 'replace'].includes(actionType)) {
-          item = mergeOnUpdate ? (response.data || item) : item
-          log && log('updating item in internal collection')
-          newData = data.map(i => getId(i) === itemId ? item : i)
+          item = mergeOnUpdate ? deepmerge(item, newData) : item
 
-          actionType === 'replace' && onReplace && onReplace(item)
-          actionType === 'update' && onUpdate && onUpdate(item)
+          log('updating item in internal collection', item)
+          newData = data.map(i => (getId(i) === itemId ? item : i))
+
+          actionType === 'replace' && onReplace(item) // event
+          actionType === 'update' && onUpdate(item) // event
         } else if (actionType === 'create') {
-          item = mergeOnCreate ? (response.data || item) : item
-          log && log('adding item to internal collection')
+          item = mergeOnCreate ? deepmerge(item, newData) : item
+
+          log('adding item to internal collection', item)
           newData = [...data, item]
 
-          onCreate && onCreate(item)
+          onCreate(item) // event
         } else if (actionType === 'remove') {
-          log && log('deleting item from internal collection')
+          log('deleting item from internal collection')
           newData = data.filter(i => getId(i) !== itemId)
 
-          onRemove && onRemove(item)
+          onRemove(item) // event
         }
 
         // update internal data
         isMounted && setData(newData)
       } catch (err) {
-        onError && onError(err)
+        onError(err)
         isMounted && setError(err.message)
       }
     }
 
-    log && log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)
+    log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)
 
     // mock exit for success
     if (mock) {
@@ -194,7 +213,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     return axios[method](getEndpoint(endpoint, itemId), payload)
       .then(resolve)
-      .catch((err) => handleError(err.response))
+      .catch(err => handleError(err.response))
   }
 
   const update = createActionType({ actionType: 'update', method: 'patch' })
@@ -205,12 +224,12 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   // data load function
   const load = (loadOptions = {}) => {
     let opt = deepmerge(options, loadOptions)
-    let { query, transform } = opt
+    let { query } = opt
 
     // if query param is a function, run it to derive up-to-date params
     query = typeof query === 'function' ? query() : query
 
-    log && log('GET', { endpoint, query })
+    log('GET', { endpoint, query })
 
     // only lock with loading when not pre-populated
     !isLoading && isMounted && setIsLoading(true)
@@ -221,13 +240,15 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       .get(getEndpoint(endpoint, id), { params: query })
       .then(({ data }) => {
         try {
-          log && log('GET RESPONSE:', data)
-          // dig into nested payloads if required
-          data = data.data || data
+          log('GET RESPONSE:', data)
 
-          if (transform) {
-            data = transform(data)
-          }
+          // all data gets base transform
+          data = transform(data)
+          log('AFTER transform:', data)
+
+          // if collection, transform as collection
+          data = isCollection ? transformCollection(data) : transformItem(data)
+          log(`AFTER transform${isCollection ? 'Collection' : 'Item'}:`, data)
 
           if (filter) {
             if (typeof filter === 'function') {
@@ -240,14 +261,14 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           if (isMounted) {
             setData(data)
             setIsLoading(false)
-            onLoad && onLoad(data)
+            onLoad(data)
           }
         } catch (err) {
-          onError && onError(err)
+          onError(err) // event
           isMounted && setError(err.message)
         }
       })
-      .catch((err) => {
+      .catch(err => {
         handleError(err.response)
         setError(err.message)
         setData(initialValue)
@@ -256,7 +277,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   // automatically load data upon component load and set up intervals, if defined
   useEffect(() => {
-    log && log('react-use-rest: [id] changed:', id)
+    log('react-use-rest: [id] changed:', id)
 
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
       autoload && load()
@@ -268,7 +289,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     return () => {
       if (loadingInterval) {
-        log && log('clearing load() interval', { interval })
+        log('clearing load() interval', { interval })
         clearInterval(loadingInterval)
       }
 
