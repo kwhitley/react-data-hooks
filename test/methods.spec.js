@@ -51,6 +51,26 @@ describe('Collection data fetching and methods', () => {
     const newData = result.current.data.filter(item => !oldData.includes(item))
     expect(newData).toEqual(expect.arrayContaining([newItem]))
   })
+
+  it('fires transform()', async () => {
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useCollection({
+        transformItem: item => Object.assign({ ...item, foo: 'bar' }),
+      })
+    )
+    await waitForNextUpdate()
+    const oldData = result.current.data
+    const newItem = generateItem()
+    act(() => {
+      result.current.create(newItem)
+    })
+    await waitForNextUpdate()
+    expect(axios.post).toHaveBeenCalledWith(endpoint, newItem)
+    const newData = result.current.data.filter(item => !oldData.includes(item))
+    expect(newData).toEqual(
+      expect.arrayContaining([{ ...newItem, foo: 'bar' }])
+    )
+  })
 })
 
 describe('Item data fetching and methods', () => {

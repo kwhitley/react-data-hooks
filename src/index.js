@@ -73,14 +73,14 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   // allow { log: true } alias as well as routing to custom loggers
   log = log === true ? console.log : log
 
-  log('creating hook', {
-    endpoint,
-    id,
-    idExplicitlyPassed,
-    isCollection,
-    options,
-    args,
-  })
+  // log('creating hook', {
+  //   endpoint,
+  //   id,
+  //   idExplicitlyPassed,
+  //   isCollection,
+  //   options,
+  //   args,
+  // })
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
   initialValue = options.hasOwnProperty('initialValue')
@@ -155,10 +155,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
         log('AFTER transform:', newData)
 
         // if collection, transform as collection
-        newData = isCollection
-          ? transformCollection(newData)
-          : transformItem(newData)
-        log(`AFTER transform${isCollection ? 'Collection' : 'Item'}:`, newData)
+        newData = transformItem(newData)
+        log('AFTER transformItem:', newData)
 
         // short circuit for non-collection calls
         if (!isCollection) {
