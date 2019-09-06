@@ -258,7 +258,7 @@ var createRestHook = function createRestHook(endpoint) {
         }
 
         if (['update', 'replace'].includes(actionType)) {
-          var changes = getPatch(item, oldItem)
+          var changes = (0, _utils.getPatch)(item, oldItem)
           var isPatch = actionType === 'update'
 
           if (!Object.keys(changes).length) {

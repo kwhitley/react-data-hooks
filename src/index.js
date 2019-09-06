@@ -6,7 +6,7 @@ import {
   objectFilter,
   autoResolve,
   autoReject,
-  getPatc,
+  getPatch,
   FetchStore,
 } from './utils'
 

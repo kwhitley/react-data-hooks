@@ -1,11 +1,12 @@
 {
   "name": "react-use-rest",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "React.js data hooks for REST endpoints",
   "main": "index.js",
   "target": "esnext",
   "scripts": {
-    "prebuild": "yarn test && rm -rf build",
+    "prebuild": "rm -rf build",
+    "pretest": "yarn build",
     "test": "jest --verbose",
     "test:watch": "yarn test - --watch",
     "build": "babel src --ignore '**/*.spec.js' --out-dir build -d",

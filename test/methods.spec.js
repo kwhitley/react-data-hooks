@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { renderHook, act } from '@testing-library/react-hooks'
-import { createRestHook } from '../src'
+import { createRestHook } from '../build'
 import {
   COLLECTION_ENDPOINT,
   ITEM_ENDPOINT,
