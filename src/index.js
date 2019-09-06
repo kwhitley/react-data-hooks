@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react'
 import { useStore } from 'use-store-hook'
 import defaultAxios from 'axios'
 import deepmerge from 'deepmerge'
-import { objectFilter, autoResolve, autoReject, getPatch } from './utils'
+import {
+  objectFilter,
+  autoResolve,
+  autoReject,
+  getPatc,
+  FetchStore,
+} from './utils'
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
@@ -16,6 +22,8 @@ const eventable = fn => (...args) => {
 
   return fn(...args)
 }
+
+const fetchStore = new FetchStore()
 
 export const createRestHook = (endpoint, createHookOptions = {}) => (
   ...args
@@ -73,15 +81,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   // allow { log: true } alias as well as routing to custom loggers
   log = log === true ? console.log : log
 
-  // log('creating hook', {
-  //   endpoint,
-  //   id,
-  //   idExplicitlyPassed,
-  //   isCollection,
-  //   options,
-  //   args,
-  // })
-
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
   initialValue = options.hasOwnProperty('initialValue')
     ? initialValue
@@ -89,7 +88,16 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     ? []
     : undefined
 
-  let key = 'resthook:' + endpoint + JSON.stringify(args)
+  let queryKey =
+    typeof query === 'object'
+      ? Object.keys(query).length
+        ? JSON.stringify(query)
+        : undefined
+      : typeof query === 'function'
+      ? JSON.stringify({ dynamic: true })
+      : undefined
+
+  let key = 'resthook:' + getEndpoint(endpoint, id, queryKey)
   let [data, setData] = useStore(key, initialValue, options)
   let [isLoading, setIsLoading] = useState(autoload)
   let [error, setError] = useState(undefined)
@@ -234,10 +242,19 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
     error && isMounted && setError(undefined)
 
-    axios
+    fetchStore
+      .setAxios(axios)
+      // axios
       .get(getEndpoint(endpoint, id), { params: query })
       .then(({ data }) => {
         try {
+          if (typeof data !== 'object') {
+            return onError(
+              'ERROR: Response not in object form... response.data =',
+              data
+            )
+          }
+
           log('GET RESPONSE:', data)
 
           // all data gets base transform

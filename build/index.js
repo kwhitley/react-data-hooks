@@ -56,6 +56,8 @@ var eventable = function eventable(fn) {
   }
 }
 
+var fetchStore = new _utils.FetchStore()
+
 var createRestHook = function createRestHook(endpoint) {
   var createHookOptions =
     arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {}
@@ -168,22 +170,24 @@ var createRestHook = function createRestHook(endpoint) {
       }
     } // allow { log: true } alias as well as routing to custom loggers
 
-    log = log === true ? console.log : log // log('creating hook', {
-    //   endpoint,
-    //   id,
-    //   idExplicitlyPassed,
-    //   isCollection,
-    //   options,
-    //   args,
-    // })
-    // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
+    log = log === true ? console.log : log // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
 
     initialValue = options.hasOwnProperty('initialValue')
       ? initialValue
       : isCollection
       ? []
       : undefined
-    var key = 'resthook:' + endpoint + JSON.stringify(args)
+    var queryKey =
+      (0, _typeof2['default'])(query) === 'object'
+        ? Object.keys(query).length
+          ? JSON.stringify(query)
+          : undefined
+        : typeof query === 'function'
+        ? JSON.stringify({
+            dynamic: true,
+          })
+        : undefined
+    var key = 'resthook:' + getEndpoint(endpoint, id, queryKey)
 
     var _useStore = (0, _useStoreHook.useStore)(key, initialValue, options),
       _useStore2 = (0, _slicedToArray2['default'])(_useStore, 2),
@@ -254,7 +258,7 @@ var createRestHook = function createRestHook(endpoint) {
         }
 
         if (['update', 'replace'].includes(actionType)) {
-          var changes = (0, _utils.getPatch)(item, oldItem)
+          var changes = getPatch(item, oldItem)
           var isPatch = actionType === 'update'
 
           if (!Object.keys(changes).length) {
@@ -387,7 +391,8 @@ var createRestHook = function createRestHook(endpoint) {
 
       !isLoading && isMounted && setIsLoading(true)
       error && isMounted && setError(undefined)
-      axios
+      fetchStore
+        .setAxios(axios) // axios
         .get(getEndpoint(endpoint, id), {
           params: query,
         })
@@ -395,6 +400,13 @@ var createRestHook = function createRestHook(endpoint) {
           var data = _ref.data
 
           try {
+            if ((0, _typeof2['default'])(data) !== 'object') {
+              return onError(
+                'ERROR: Response not in object form... response.data =',
+                data
+              )
+            }
+
             log('GET RESPONSE:', data) // all data gets base transform
 
             data = transform(data)
