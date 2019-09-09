@@ -11,6 +11,10 @@ var _toConsumableArray2 = _interopRequireDefault(
   require('@babel/runtime/helpers/toConsumableArray')
 )
 
+var _defineProperty2 = _interopRequireDefault(
+  require('@babel/runtime/helpers/defineProperty')
+)
+
 var _slicedToArray2 = _interopRequireDefault(
   require('@babel/runtime/helpers/slicedToArray')
 )
@@ -27,6 +31,41 @@ var _deepmerge = _interopRequireDefault(require('deepmerge'))
 
 var _utils = require('./utils')
 
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object)
+  if (Object.getOwnPropertySymbols) {
+    var symbols = Object.getOwnPropertySymbols(object)
+    if (enumerableOnly)
+      symbols = symbols.filter(function(sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable
+      })
+    keys.push.apply(keys, symbols)
+  }
+  return keys
+}
+
+function _objectSpread(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {}
+    if (i % 2) {
+      ownKeys(source, true).forEach(function(key) {
+        ;(0, _defineProperty2['default'])(target, key, source[key])
+      })
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source))
+    } else {
+      ownKeys(source).forEach(function(key) {
+        Object.defineProperty(
+          target,
+          key,
+          Object.getOwnPropertyDescriptor(source, key)
+        )
+      })
+    }
+  }
+  return target
+}
+
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 var getEndpoint = function getEndpoint() {
   for (
@@ -42,6 +81,12 @@ var getEndpoint = function getEndpoint() {
       return p !== undefined
     })
     .join('/')
+}
+
+var getHash = function getHash() {
+  return {
+    key: Math.floor(Math.random() * 1e12),
+  }
 } // helper function to handle functions that may be passed a DOM event
 
 var eventable = function eventable(fn) {
@@ -57,6 +102,15 @@ var eventable = function eventable(fn) {
 }
 
 var fetchStore = new _utils.FetchStore()
+
+var createLogAndSetMeta = function createLogAndSetMeta(_ref) {
+  var log = _ref.log,
+    setMeta = _ref.setMeta
+  return function(newMeta) {
+    log('setting meta', newMeta)
+    setMeta(newMeta)
+  }
+}
 
 var createRestHook = function createRestHook(endpoint) {
   var createHookOptions =
@@ -194,15 +248,21 @@ var createRestHook = function createRestHook(endpoint) {
       data = _useStore2[0],
       setData = _useStore2[1]
 
-    var _useState = (0, _react.useState)(autoload),
+    var _useState = (0, _react.useState)({
+        isLoading: autoload,
+        filtered: initialValue,
+        error: undefined,
+        key: getHash(),
+      }),
       _useState2 = (0, _slicedToArray2['default'])(_useState, 2),
-      isLoading = _useState2[0],
-      setIsLoading = _useState2[1]
+      meta = _useState2[0],
+      setMeta = _useState2[1]
 
-    var _useState3 = (0, _react.useState)(undefined),
-      _useState4 = (0, _slicedToArray2['default'])(_useState3, 2),
-      error = _useState4[0],
-      setError = _useState4[1]
+    var prevFetchConfig = undefined
+    var logAndSetMeta = createLogAndSetMeta({
+      log: log,
+      setMeta: setMeta,
+    })
 
     var handleError = function handleError() {
       var error =
@@ -219,9 +279,14 @@ var createRestHook = function createRestHook(endpoint) {
       }
 
       log('handleError executed', error)
-      isMounted && setIsLoading(false)
-      isMounted && setError(message || error)
-      onError(error) // event
+      isMounted &&
+        logAndSetMeta(
+          _objectSpread({}, meta, {
+            isLoading: false,
+            error: message || error,
+          })
+        )
+      onError(message || error) // event
       // handle authentication errors
 
       if (onAuthenticationError && [401, 403].includes(status)) {
@@ -273,11 +338,15 @@ var createRestHook = function createRestHook(endpoint) {
           itemId = undefined // don't build a collection/:id endpoint from item itself during POST
         }
 
-        isMounted && setIsLoading(true)
+        isMounted &&
+          logAndSetMeta(
+            _objectSpread({}, meta, {
+              isLoading: true,
+            })
+          )
 
         var resolve = function resolve(response) {
           try {
-            isMounted && setIsLoading(false)
             var newData = transform(response.data)
             log('AFTER transform:', newData) // if collection, transform as collection
 
@@ -302,7 +371,16 @@ var createRestHook = function createRestHook(endpoint) {
                 : item
               onUpdate(updated) // event
 
-              return isMounted && setData(updated)
+              isMounted && setData(updated)
+              isMounted &&
+                logAndSetMeta(
+                  _objectSpread({}, meta, {
+                    isLoading: false,
+                    error: undefined,
+                    key: getHash(),
+                  })
+                )
+              return true
             }
 
             if (['update', 'replace'].includes(actionType)) {
@@ -340,6 +418,13 @@ var createRestHook = function createRestHook(endpoint) {
           }
         }
 
+        isMounted &&
+          logAndSetMeta(
+            _objectSpread({}, meta, {
+              isLoading: false,
+              key: getHash(),
+            })
+          )
         log(
           'calling "'.concat(method, '" to'),
           getEndpoint(endpoint, itemId),
@@ -381,23 +466,33 @@ var createRestHook = function createRestHook(endpoint) {
       var loadOptions =
         arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
       var opt = (0, _deepmerge['default'])(options, loadOptions)
-      var query = opt.query // if query param is a function, run it to derive up-to-date params
+      var query = opt.query,
+        loadOnlyOnce = opt.loadOnlyOnce
+      var fetchEndpoint = getEndpoint(endpoint, id) // bail if no longer mounted
+
+      if (!isMounted) {
+        return function() {}
+      } // if query param is a function, run it to derive up-to-date params
 
       query = typeof query === 'function' ? query() : query
       log('GET', {
-        endpoint: endpoint,
+        endpoint: fetchEndpoint,
         query: query,
-      }) // only lock with loading when not pre-populated
-
-      !isLoading && isMounted && setIsLoading(true)
-      error && isMounted && setError(undefined)
+      })
+      isMounted &&
+        logAndSetMeta(
+          _objectSpread({}, meta, {
+            isLoading: true,
+            error: undefined,
+          })
+        )
       fetchStore
-        .setAxios(axios) // axios
-        .get(getEndpoint(endpoint, id), {
+        .setAxios(axios)
+        .get(fetchEndpoint, {
           params: query,
         })
-        .then(function(_ref) {
-          var data = _ref.data
+        .then(function(_ref2) {
+          var data = _ref2.data
 
           try {
             if ((0, _typeof2['default'])(data) !== 'object') {
@@ -423,35 +518,67 @@ var createRestHook = function createRestHook(endpoint) {
               data
             )
 
-            if (filter) {
-              if (typeof filter === 'function') {
-                data = data.filter(filter)
-              } else {
-                data = data.filter((0, _utils.objectFilter)(filter))
-              }
-            }
-
             if (isMounted) {
               setData(data)
-              setIsLoading(false)
+              logAndSetMeta(
+                _objectSpread({}, meta, {
+                  isLoading: false,
+                  error: undefined,
+                  key: getHash(),
+                })
+              )
               onLoad(data)
             }
           } catch (err) {
-            onError(err) // event
-
-            isMounted && setError(err.message)
+            handleError(err)
           }
         })
         ['catch'](function(err) {
-          handleError(err.response)
-          setError(err.message)
-          setData(initialValue)
+          handleError(err.response || err)
+          isMounted && setData(initialValue)
         })
-    } // automatically load data upon component load and set up intervals, if defined
+    } // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES
 
     ;(0, _react.useEffect)(
       function() {
-        log('react-use-rest: [id] changed:', id)
+        // complete avoid this useEffect pass when no filter set or not working on collection
+        if (!filter || !isCollection || !Array.isArray(data)) {
+          return function() {}
+        }
+
+        log('filter changed on datahook', [filter, data])
+        var filtered = data
+        var prev = meta.filtered
+
+        if (filter) {
+          if (typeof filter === 'function') {
+            filtered = data.filter(filter)
+          } else {
+            filtered = data.filter((0, _utils.objectFilter)(filter))
+          }
+        }
+
+        var sameLength = filtered.length === prev.length
+        var allMatched = filtered.reduce(function(acc, item) {
+          return prev.includes(item) && acc
+        }, true)
+
+        if (!sameLength || !allMatched) {
+          log('changes in filtered results detected, new filtered =', filtered)
+          isMounted &&
+            logAndSetMeta(
+              _objectSpread({}, meta, {
+                filtered: filtered,
+              })
+            )
+        }
+      },
+      [filter, data]
+    ) // EFFECT: SET INITIAL LOAD, LOADING INTERVAL, ETC
+
+    ;(0, _react.useEffect)(
+      function() {
+        log('react-use-rest: id changed:', id)
 
         if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
           autoload && load()
@@ -469,6 +596,7 @@ var createRestHook = function createRestHook(endpoint) {
             clearInterval(loadingInterval)
           }
 
+          log('unmounting data hook')
           isMounted = false
         }
       },
@@ -476,15 +604,16 @@ var createRestHook = function createRestHook(endpoint) {
     )
     return {
       data: data,
-      setData: setData,
+      filtered: meta.filtered,
       load: eventable(load),
       refresh: eventable(load),
       create: create,
       remove: remove,
       update: update,
       replace: replace,
-      isLoading: isLoading,
-      error: error,
+      isLoading: meta.isLoading,
+      error: meta.error,
+      key: meta.key,
     }
   }
 }

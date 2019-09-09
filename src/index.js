@@ -13,6 +13,8 @@ import {
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
 
+const getHash = () => ({ key: Math.floor(Math.random() * 1e12) })
+
 // helper function to handle functions that may be passed a DOM event
 const eventable = fn => (...args) => {
   let arg0 = args[0] || {}
@@ -24,6 +26,11 @@ const eventable = fn => (...args) => {
 }
 
 const fetchStore = new FetchStore()
+
+const createLogAndSetMeta = ({ log, setMeta }) => newMeta => {
+  log('setting meta', newMeta)
+  setMeta(newMeta)
+}
 
 export const createRestHook = (endpoint, createHookOptions = {}) => (
   ...args
@@ -99,8 +106,15 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
   let key = 'resthook:' + getEndpoint(endpoint, id, queryKey)
   let [data, setData] = useStore(key, initialValue, options)
-  let [isLoading, setIsLoading] = useState(autoload)
-  let [error, setError] = useState(undefined)
+  let [meta, setMeta] = useState({
+    isLoading: autoload,
+    filtered: initialValue,
+    error: undefined,
+    key: getHash(),
+  })
+  let prevFetchConfig = undefined
+
+  const logAndSetMeta = createLogAndSetMeta({ log, setMeta })
 
   const handleError = (error = {}) => {
     if (typeof error === 'object') {
@@ -113,9 +127,14 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     }
 
     log('handleError executed', error)
-    isMounted && setIsLoading(false)
-    isMounted && setError(message || error)
-    onError(error) // event
+
+    isMounted &&
+      logAndSetMeta({
+        ...meta,
+        isLoading: false,
+        error: message || error,
+      })
+    onError(message || error) // event
 
     // handle authentication errors
     if (onAuthenticationError && [401, 403].includes(status)) {
@@ -153,12 +172,14 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       itemId = undefined // don't build a collection/:id endpoint from item itself during POST
     }
 
-    isMounted && setIsLoading(true)
+    isMounted &&
+      logAndSetMeta({
+        ...meta,
+        isLoading: true,
+      })
 
     const resolve = response => {
       try {
-        isMounted && setIsLoading(false)
-
         let newData = transform(response.data)
         log('AFTER transform:', newData)
 
@@ -177,7 +198,17 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
           onUpdate(updated) // event
 
-          return isMounted && setData(updated)
+          isMounted && setData(updated)
+
+          isMounted &&
+            logAndSetMeta({
+              ...meta,
+              isLoading: false,
+              error: undefined,
+              key: getHash(),
+            })
+
+          return true
         }
 
         if (['update', 'replace'].includes(actionType)) {
@@ -210,6 +241,13 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       }
     }
 
+    isMounted &&
+      logAndSetMeta({
+        ...meta,
+        isLoading: false,
+        key: getHash(),
+      })
+
     log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)
 
     // mock exit for success
@@ -230,22 +268,29 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   // data load function
   const load = (loadOptions = {}) => {
     let opt = deepmerge(options, loadOptions)
-    let { query } = opt
+    let { query, loadOnlyOnce } = opt
+    let fetchEndpoint = getEndpoint(endpoint, id)
+
+    // bail if no longer mounted
+    if (!isMounted) {
+      return () => {}
+    }
 
     // if query param is a function, run it to derive up-to-date params
     query = typeof query === 'function' ? query() : query
 
-    log('GET', { endpoint, query })
+    log('GET', { endpoint: fetchEndpoint, query })
 
-    // only lock with loading when not pre-populated
-    !isLoading && isMounted && setIsLoading(true)
-
-    error && isMounted && setError(undefined)
+    isMounted &&
+      logAndSetMeta({
+        ...meta,
+        isLoading: true,
+        error: undefined,
+      })
 
     fetchStore
       .setAxios(axios)
-      // axios
-      .get(getEndpoint(endpoint, id), { params: query })
+      .get(fetchEndpoint, { params: query })
       .then(({ data }) => {
         try {
           if (typeof data !== 'object') {
@@ -265,34 +310,64 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
           data = isCollection ? transformCollection(data) : transformItem(data)
           log(`AFTER transform${isCollection ? 'Collection' : 'Item'}:`, data)
 
-          if (filter) {
-            if (typeof filter === 'function') {
-              data = data.filter(filter)
-            } else {
-              data = data.filter(objectFilter(filter))
-            }
-          }
-
           if (isMounted) {
             setData(data)
-            setIsLoading(false)
+
+            logAndSetMeta({
+              ...meta,
+              isLoading: false,
+              error: undefined,
+              key: getHash(),
+            })
             onLoad(data)
           }
         } catch (err) {
-          onError(err) // event
-          isMounted && setError(err.message)
+          handleError(err)
         }
       })
       .catch(err => {
-        handleError(err.response)
-        setError(err.message)
-        setData(initialValue)
+        handleError(err.response || err)
+        isMounted && setData(initialValue)
       })
   }
 
-  // automatically load data upon component load and set up intervals, if defined
+  // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES
   useEffect(() => {
-    log('react-use-rest: [id] changed:', id)
+    // complete avoid this useEffect pass when no filter set or not working on collection
+    if (!filter || !isCollection || !Array.isArray(data)) {
+      return () => {}
+    }
+
+    log('filter changed on datahook', [filter, data])
+    var filtered = data
+    var prev = meta.filtered
+
+    if (filter) {
+      if (typeof filter === 'function') {
+        filtered = data.filter(filter)
+      } else {
+        filtered = data.filter(objectFilter(filter))
+      }
+    }
+
+    const sameLength = filtered.length === prev.length
+    const allMatched = filtered.reduce((acc, item) => {
+      return prev.includes(item) && acc
+    }, true)
+
+    if (!sameLength || !allMatched) {
+      log('changes in filtered results detected, new filtered =', filtered)
+      isMounted &&
+        logAndSetMeta({
+          ...meta,
+          filtered,
+        })
+    }
+  }, [filter, data])
+
+  // EFFECT: SET INITIAL LOAD, LOADING INTERVAL, ETC
+  useEffect(() => {
+    log('react-use-rest: id changed:', id)
 
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
       autoload && load()
@@ -308,20 +383,23 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
         clearInterval(loadingInterval)
       }
 
+      log('unmounting data hook')
+
       isMounted = false
     }
   }, [id])
 
   return {
     data,
-    setData,
+    filtered: meta.filtered,
     load: eventable(load),
     refresh: eventable(load),
     create,
     remove,
     update,
     replace,
-    isLoading,
-    error,
+    isLoading: meta.isLoading,
+    error: meta.error,
+    key: meta.key,
   }
 }

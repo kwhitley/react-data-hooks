@@ -1,17 +1,20 @@
 # react-use-rest
-React.js data hooks for REST API endpoints
----
+
+## React.js data hooks for REST API endpoints
+
 [![npm version](https://badge.fury.io/js/react-use-rest.svg)](https://www.npmjs.com/package/react-use-rest)
 [![Build Status via Travis CI](https://travis-ci.org/kwhitley/react-use-rest.svg?branch=master)](https://travis-ci.org/kwhitley/react-use-rest)
 [![gzip size](https://img.badgesize.io/https://unpkg.com/react-use-rest?compression=gzip&style=flat-square)](https://unpkg.com/react-use-rest)
 
 # Installation
+
 ```
 yarn add react-use-rest
 ```
 
 # What It Does
-React hooks are awesome, but loading and managing API endpoints can still be a pain.  This library exports a single named
+
+React hooks are awesome, but loading and managing API endpoints can still be a pain. This library exports a single named
 function, `createRestHook(endpoint, options)`, which allows you to create a simple, yet powerful way to communicate with
 your endpoints, without needing advanced state management like redux/mobx.
 
@@ -31,6 +34,7 @@ your endpoints, without needing advanced state management like redux/mobx.
 - [x] data is shared across components without context or prop-drilling, thanks to **[use-store-hook](https://www.npmjs.com/package/use-store-hook)**
 
 # Examples
+
 - **[basic](#example-1)**
 - **[all options/returns (until documentation details all params)](#example-2)**
 - **[chained hooks (loading details dynamically)](#example-3)**
@@ -40,7 +44,9 @@ your endpoints, without needing advanced state management like redux/mobx.
 ---
 
 ## Example 1
+
 **(basic usage)**
+
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
@@ -53,18 +59,16 @@ export default function MyApp() {
 
   return (
     <div>
-      {
-        isLoading
-        ? 'loading kittens...'
-        : `we found ${kittens.length} kittens!`
-      }
+      {isLoading ? 'loading kittens...' : `we found ${kittens.length} kittens!`}
     </div>
   )
 }
 ```
 
 ## Example 2
+
 **(all options/returns exposed)**
+
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
@@ -76,8 +80,10 @@ export default function MyApp() {
   // instantiate data hook with options (all options may also be passed at time of creation [above])
   let {
     data = [],                      // data returned from API (defaults to empty array)
+    filtered = [],                  // data, as filtered with filter function (options) responds to changes in filter or data
     isLoading,                      // isLoading flag (true during pending requests)
     error,                          // API error (if any) - this is
+    key,                            // random render-busting attr to explode into a component on data changes.  Looks like { key: 123556456421 }
     update,                         // PATCH fn(item, oldItem) - sends only changes via PATCH (if changed)
     replace,                        // PUT fn(item, oldItem) - sends full item via PUT (if changed)
     remove,                         // DELETE fn(item, oldItem) - deleted item
@@ -87,7 +93,7 @@ export default function MyApp() {
   } = useKittens({
     axios: myAxiosInstance,         // can pass in a custom axios instance to use (for advanced usage)
     autoload: true,                 // data will fire initial GET by default unless set to false,
-    filter: item => item.age > 5,   // can client-side filter results (in case your API doesn't have filters),
+    filter: item => item.age > 5,   // filters data results into the "filtered" collection,
     getId: item => item._id,        // tell the hook how to derive item ID from a collection item
     initialValue: []                // initial value of "data" return (defaults to [] if collection assumed)
     interval: 5000,                 // refresh collection every 5000ms (5s),
@@ -130,7 +136,9 @@ export default function MyApp() {
 ```
 
 ## Example 3
+
 **(chained hooks, e.g. collection and item details)**
+
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
@@ -142,7 +150,7 @@ export default MyApp = () => {
   // quick tip: { persist: true } loads cached content at page load, then fires the GET and updates
   // as necessary to prevent stale data
   let { data: kittens } = useKittens({ persist: true })
-  let [ selectedKitten, setSelectedKitten ] = useState()
+  let [selectedKitten, setSelectedKitten] = useState()
 
   let { data: kittenDetails } = useKittens(selectedKitten)
 
@@ -152,20 +160,14 @@ export default MyApp = () => {
 
   return (
     <div>
-      {
-        kittens.map(kitten =>
-          <button
-            key={kitten.id}
-            onClick={() => setSelectedKitten(kitten.id)}
-            >
-            { kitten.name }
-          </button>
-        )
-      }
+      {kittens.map(kitten => (
+        <button key={kitten.id} onClick={() => setSelectedKitten(kitten.id)}>
+          {kitten.name}
+        </button>
+      ))}
 
       <h1>Payload</h1>
-      {
-        JSON.stringify(kittenDetails, 2, null) // will reload whenever selectedKitten changes
+      {JSON.stringify(kittenDetails, 2, null) // will reload whenever selectedKitten changes
       }
     </div>
   )
@@ -173,13 +175,16 @@ export default MyApp = () => {
 ```
 
 ## Example 4
+
 **(generate and load hook dynamically from props)**
+
 ```js
 import React, { useState, useEffect } from 'react'
 import { createRestHook } from 'react-use-rest'
 
 // create a curried function to dynamically return a data hook from a collection name
-const useCollectionItems = (collectionName = '') => createRestHook(`/api/${collectionName}`)
+const useCollectionItems = (collectionName = '') =>
+  createRestHook(`/api/${collectionName}`)
 
 export const ViewCollectionItem = ({ collectionName, itemId }) => {
   console.log('viewing collection item', itemId, 'in', collectionName)
@@ -190,27 +195,23 @@ export const ViewCollectionItem = ({ collectionName, itemId }) => {
 
   let { data: itemDetails } = useCollectionItems(collectionName)(itemId)
 
-  return (
-    <div>
-      {
-        item
-        ? JSON.stringify(itemDetails, null, 2)
-        : null
-      }
-    </div>
-  )
+  return <div>{item ? JSON.stringify(itemDetails, null, 2) : null}</div>
 }
 ```
 
 ## Example 5
+
 **(redirect to login on 401)**
+
 ```js
 import React from 'react'
 import { createRestHook } from 'react-use-rest'
 
 // create a data hook that might see a 401/Unauthorized
 const useKittens = createRestHook('/api/kittens', {
-  onAuthenticationError: (err) => window.location.href = '/login?returnTo=' + encodeURIComponent(window.location.href),
+  onAuthenticationError: err =>
+    (window.location.href =
+      '/login?returnTo=' + encodeURIComponent(window.location.href)),
 })
 
 export default function MyApp() {
@@ -221,11 +222,7 @@ export default function MyApp() {
 
   return (
     <div>
-      {
-        isLoading
-        ? 'loading kittens...'
-        : `we found ${data.length} kittens!`
-      }
+      {isLoading ? 'loading kittens...' : `we found ${data.length} kittens!`}
     </div>
   )
 }

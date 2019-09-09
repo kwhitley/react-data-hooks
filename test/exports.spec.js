@@ -15,7 +15,8 @@ describe('react-use-rest', () => {
 
     const attributes = [
       { name: 'data', type: 'object' },
-      { name: 'setData', type: 'function' },
+      { name: 'filtered', type: 'object' },
+      { name: 'key', type: 'object' },
       { name: 'isLoading', type: 'boolean' },
       { name: 'error', type: 'undefined' },
       { name: 'load', type: 'function' },
