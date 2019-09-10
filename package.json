@@ -1,6 +1,6 @@
 {
   "name": "react-use-rest",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "React.js data hooks for REST endpoints",
   "main": "index.js",
   "target": "esnext",
