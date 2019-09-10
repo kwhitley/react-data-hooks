@@ -64,6 +64,33 @@ export default function MyApp() {
   )
 }
 ```
+[continue to other examples...](#example-2)
+
+# API
+### Options
+Name | Type | Default | Description
+--- | :---: | :---: | ---
+**axios** | `axios instance` | `axios` | You can pass in a custom axios instance to use (for advanced usage with injected headers, etc)
+**autoload** | `boolean` | `true` | data will fire initial GET by default unless set to false
+**filter** | `function` | `undefined` | filters data results into the "filtered" collection
+**getId** | `function` | `(item) => item.id` | how to derive item ID from a collection item (used for endpoint generation for PUT/PATCH/DELETE
+**initialValue** | `object` or `array` | `[]` or `undefined` | initial value of "data" return, [] if collection, undefined if ID endpoint
+**interval** | `number` | `undefined` | refresh collection every 5000ms (5s)
+**isCollection** | `boolean | `false` | set to false to allow direct REST against a specific endpoint
+**log** | `boolean` or `function` | `false` | if passed `true`, uses `console.log` for debug output, otherwise accepts any function
+**mergeOnCreate** | `boolean` | `true` | use response payload for newly created items
+**mergeOnUpdate** | `boolean | `true` | use response payload for newly updated items
+**mock** | `boolean` | `true` | simulate, but do not fire POST/PUT/PATCH/DELETE actions (for testing)
+**onAuthenticationError** | `function` | `undefined` | fired when calls return 401 or 403 (e.g. can redirect, etc)
+**onCreate** | `function` | `undefined` | fired when item is created successfully
+**onError** | `function` | `console.error` | fired on internal error, or response errors
+**onLoad** | `function` | `undefined` | fired when data is loaded successfully
+**onRemove** | `function` | `undefined` | fired when item is deleted successfully
+**onReplace** | `function` | `undefined` | fired when item is replaced successfully
+**onUpdate** | `function` | `undefined` | fired when item is updated successfully
+**persist** | `boolean` | `false` | will persist results to localStorage for fast delivery on page refresh
+**query** | `object` or `function` | `undefined` | can send fixed query params via object such as `{ isLive: true }` or via a dynamically executed query function (executed at time of load/interval), such as `() => ({ isLive: Math.random() > 0.5 })`
+**transform** | `function` | `undefined` | use to reshape your API payload (e.g. `(data) => data.data.slice(0,2)`
 
 ## Example 2
 
