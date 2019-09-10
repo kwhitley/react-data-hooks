@@ -57,6 +57,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     initialValue,
     interval,
     isCollection,
+    loadOnlyOnce = false,
     log = () => {},
     onAuthenticationError = () => {},
     onCreate = () => {},
@@ -106,6 +107,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
   let key = 'resthook:' + getEndpoint(endpoint, id, queryKey)
   let [data, setData] = useStore(key, initialValue, options)
+  let [loadedOnce, setLoadedOnce] = useStore(key + ':loaded.once', false)
   let [meta, setMeta] = useState({
     isLoading: autoload,
     filtered: initialValue,
@@ -272,7 +274,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     let fetchEndpoint = getEndpoint(endpoint, id)
 
     // bail if no longer mounted
-    if (!isMounted) {
+    if (!isMounted || (loadOnlyOnce && loadedOnce)) {
       return () => {}
     }
 
@@ -313,6 +315,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
           if (isMounted) {
             setData(data)
 
+            !loadedOnce && setLoadedOnce(true)
+
             logAndSetMeta({
               ...meta,
               isLoading: false,
@@ -327,7 +331,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       })
       .catch(err => {
         handleError(err.response || err)
-        isMounted && setData(initialValue)
       })
   }
 

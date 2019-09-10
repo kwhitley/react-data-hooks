@@ -160,6 +160,9 @@ var createRestHook = function createRestHook(endpoint) {
       initialValue = options.initialValue,
       interval = options.interval,
       isCollection = options.isCollection,
+      _options$loadOnlyOnce = options.loadOnlyOnce,
+      loadOnlyOnce =
+        _options$loadOnlyOnce === void 0 ? false : _options$loadOnlyOnce,
       _options$log = options.log,
       log = _options$log === void 0 ? function() {} : _options$log,
       _options$onAuthentica = options.onAuthenticationError,
@@ -247,6 +250,11 @@ var createRestHook = function createRestHook(endpoint) {
       _useStore2 = (0, _slicedToArray2['default'])(_useStore, 2),
       data = _useStore2[0],
       setData = _useStore2[1]
+
+    var _useStore3 = (0, _useStoreHook.useStore)(key + ':loaded.once', false),
+      _useStore4 = (0, _slicedToArray2['default'])(_useStore3, 2),
+      loadedOnce = _useStore4[0],
+      setLoadedOnce = _useStore4[1]
 
     var _useState = (0, _react.useState)({
         isLoading: autoload,
@@ -470,7 +478,7 @@ var createRestHook = function createRestHook(endpoint) {
         loadOnlyOnce = opt.loadOnlyOnce
       var fetchEndpoint = getEndpoint(endpoint, id) // bail if no longer mounted
 
-      if (!isMounted) {
+      if (!isMounted || (loadOnlyOnce && loadedOnce)) {
         return function() {}
       } // if query param is a function, run it to derive up-to-date params
 
@@ -520,6 +528,7 @@ var createRestHook = function createRestHook(endpoint) {
 
             if (isMounted) {
               setData(data)
+              !loadedOnce && setLoadedOnce(true)
               logAndSetMeta(
                 _objectSpread({}, meta, {
                   isLoading: false,
@@ -535,7 +544,6 @@ var createRestHook = function createRestHook(endpoint) {
         })
         ['catch'](function(err) {
           handleError(err.response || err)
-          isMounted && setData(initialValue)
         })
     } // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES
 
