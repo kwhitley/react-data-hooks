@@ -364,6 +364,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
         logAndSetMeta({
           ...meta,
           filtered,
+          key: getHash(),
         })
     }
   }, [filter, data])

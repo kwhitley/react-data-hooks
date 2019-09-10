@@ -577,6 +577,7 @@ var createRestHook = function createRestHook(endpoint) {
             logAndSetMeta(
               _objectSpread({}, meta, {
                 filtered: filtered,
+                key: getHash(),
               })
             )
         }
