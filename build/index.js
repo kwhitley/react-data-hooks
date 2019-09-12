@@ -244,7 +244,13 @@ var createRestHook = function createRestHook(endpoint) {
             dynamic: true,
           })
         : undefined
-    var key = 'resthook:' + getEndpoint(endpoint, id, queryKey)
+    var key =
+      'resthook:' +
+      getEndpoint(
+        endpoint,
+        (!isCollection && (id || ':id')) || undefined,
+        queryKey
+      )
 
     var _useStore = (0, _useStoreHook.useStore)(key, initialValue, options),
       _useStore2 = (0, _slicedToArray2['default'])(_useStore, 2),
@@ -476,11 +482,7 @@ var createRestHook = function createRestHook(endpoint) {
       var opt = (0, _deepmerge['default'])(options, loadOptions)
       var query = opt.query,
         loadOnlyOnce = opt.loadOnlyOnce
-      var fetchEndpoint = getEndpoint(endpoint, id) // bail if no longer mounted
-
-      if (!isMounted || (loadOnlyOnce && loadedOnce)) {
-        return function() {}
-      } // if query param is a function, run it to derive up-to-date params
+      var fetchEndpoint = getEndpoint(endpoint, id) // if query param is a function, run it to derive up-to-date params
 
       query = typeof query === 'function' ? query() : query
       log('GET', {
@@ -589,15 +591,7 @@ var createRestHook = function createRestHook(endpoint) {
       function() {
         log('react-use-rest: id changed:', id)
 
-        if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
-          autoload && load()
-
-          if (interval) {
-            var loadingInterval = setInterval(load, interval)
-          }
-        }
-
-        return function() {
+        var exit = function exit() {
           if (loadingInterval) {
             log('clearing load() interval', {
               interval: interval,
@@ -608,6 +602,21 @@ var createRestHook = function createRestHook(endpoint) {
           log('unmounting data hook')
           isMounted = false
         }
+
+        if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
+          // bail if no longer mounted
+          if (!isMounted || (loadOnlyOnce && loadedOnce)) {
+            return exit
+          }
+
+          autoload && load()
+
+          if (interval) {
+            var loadingInterval = setInterval(load, interval)
+          }
+        }
+
+        return exit
       },
       [id]
     )

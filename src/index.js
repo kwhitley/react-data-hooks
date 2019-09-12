@@ -105,7 +105,14 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       ? JSON.stringify({ dynamic: true })
       : undefined
 
-  let key = 'resthook:' + getEndpoint(endpoint, id, queryKey)
+  let key =
+    'resthook:' +
+    getEndpoint(
+      endpoint,
+      (!isCollection && (id || ':id')) || undefined,
+      queryKey
+    )
+
   let [data, setData] = useStore(key, initialValue, options)
   let [loadedOnce, setLoadedOnce] = useStore(key + ':loaded.once', false)
   let [meta, setMeta] = useState({
@@ -273,11 +280,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     let { query, loadOnlyOnce } = opt
     let fetchEndpoint = getEndpoint(endpoint, id)
 
-    // bail if no longer mounted
-    if (!isMounted || (loadOnlyOnce && loadedOnce)) {
-      return () => {}
-    }
-
     // if query param is a function, run it to derive up-to-date params
     query = typeof query === 'function' ? query() : query
 
@@ -373,15 +375,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   useEffect(() => {
     log('react-use-rest: id changed:', id)
 
-    if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
-      autoload && load()
-
-      if (interval) {
-        var loadingInterval = setInterval(load, interval)
-      }
-    }
-
-    return () => {
+    const exit = () => {
       if (loadingInterval) {
         log('clearing load() interval', { interval })
         clearInterval(loadingInterval)
@@ -391,6 +385,21 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
       isMounted = false
     }
+
+    if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
+      // bail if no longer mounted
+      if (!isMounted || (loadOnlyOnce && loadedOnce)) {
+        return exit
+      }
+
+      autoload && load()
+
+      if (interval) {
+        var loadingInterval = setInterval(load, interval)
+      }
+    }
+
+    return exit
   }, [id])
 
   return {
