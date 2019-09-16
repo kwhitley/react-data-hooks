@@ -25,11 +25,9 @@ var _react = require('react')
 
 var _useStoreHook = require('use-store-hook')
 
-var _axios = _interopRequireDefault(require('axios'))
-
 var _deepmerge = _interopRequireDefault(require('deepmerge'))
 
-var _utils = require('./utils')
+var _lib = require('./lib')
 
 function ownKeys(object, enumerableOnly) {
   var keys = Object.keys(object)
@@ -49,7 +47,7 @@ function _objectSpread(target) {
     var source = arguments[i] != null ? arguments[i] : {}
     if (i % 2) {
       ownKeys(source, true).forEach(function(key) {
-        ;(0, _defineProperty2['default'])(target, key, source[key])
+        ;(0, _defineProperty2.default)(target, key, source[key])
       })
     } else if (Object.getOwnPropertyDescriptors) {
       Object.defineProperties(target, Object.getOwnPropertyDescriptors(source))
@@ -101,7 +99,7 @@ var eventable = function eventable(fn) {
   }
 }
 
-var fetchStore = new _utils.FetchStore()
+var fetchStore = new _lib.FetchStore()
 
 var createLogAndSetMeta = function createLogAndSetMeta(_ref) {
   var log = _ref.log,
@@ -128,27 +126,21 @@ var createRestHook = function createRestHook(endpoint) {
       hookOptions = args[1]
     var isMounted = true
     var idExplicitlyPassed =
-      args.length && (0, _typeof2['default'])(args[0]) !== 'object'
+      args.length && (0, _typeof2.default)(args[0]) !== 'object'
 
-    if (
-      (0, _typeof2['default'])(id) === 'object' &&
-      hookOptions === undefined
-    ) {
+    if ((0, _typeof2.default)(id) === 'object' && hookOptions === undefined) {
       // e.g. useHook({ something })
       hookOptions = id // use first param as options
 
       id = undefined
     } // local options are a blend of factory options and instantiation options
 
-    var options = (0, _deepmerge['default'])(
-      createHookOptions,
-      hookOptions || {}
-    ) // extract options
+    var options = (0, _deepmerge.default)(createHookOptions, hookOptions || {}) // extract options
 
     var _options$autoload = options.autoload,
       autoload = _options$autoload === void 0 ? true : _options$autoload,
       _options$axios = options.axios,
-      axios = _options$axios === void 0 ? _axios['default'] : _options$axios,
+      axios = _options$axios === void 0 ? _lib.axios : _options$axios,
       filter = options.filter,
       _options$getId = options.getId,
       getId =
@@ -235,7 +227,7 @@ var createRestHook = function createRestHook(endpoint) {
       ? []
       : undefined
     var queryKey =
-      (0, _typeof2['default'])(query) === 'object'
+      (0, _typeof2.default)(query) === 'object'
         ? Object.keys(query).length
           ? JSON.stringify(query)
           : undefined
@@ -253,12 +245,12 @@ var createRestHook = function createRestHook(endpoint) {
       )
 
     var _useStore = (0, _useStoreHook.useStore)(key, initialValue, options),
-      _useStore2 = (0, _slicedToArray2['default'])(_useStore, 2),
+      _useStore2 = (0, _slicedToArray2.default)(_useStore, 2),
       data = _useStore2[0],
       setData = _useStore2[1]
 
     var _useStore3 = (0, _useStoreHook.useStore)(key + ':loaded.once', false),
-      _useStore4 = (0, _slicedToArray2['default'])(_useStore3, 2),
+      _useStore4 = (0, _slicedToArray2.default)(_useStore3, 2),
       loadedOnce = _useStore4[0],
       setLoadedOnce = _useStore4[1]
 
@@ -268,7 +260,7 @@ var createRestHook = function createRestHook(endpoint) {
         error: undefined,
         key: getHash(),
       }),
-      _useState2 = (0, _slicedToArray2['default'])(_useState, 2),
+      _useState2 = (0, _slicedToArray2.default)(_useState, 2),
       meta = _useState2[0],
       setMeta = _useState2[1]
 
@@ -282,13 +274,16 @@ var createRestHook = function createRestHook(endpoint) {
       var error =
         arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
 
-      if ((0, _typeof2['default'])(error) === 'object') {
+      if ((0, _typeof2.default)(error) === 'object') {
         var message = error.message,
           status = error.status
 
         if (error.response) {
           status = error.response.status
           message = error.response.data
+        } else if (!status && Number(message)) {
+          status = Number(message)
+          message = undefined
         }
       }
 
@@ -300,7 +295,7 @@ var createRestHook = function createRestHook(endpoint) {
             error: message || error,
           })
         )
-      onError(message || error) // event
+      onError(message || status || error) // event
       // handle authentication errors
 
       if (onAuthenticationError && [401, 403].includes(status)) {
@@ -323,7 +318,7 @@ var createRestHook = function createRestHook(endpoint) {
         log(actionType.toUpperCase(), 'on', item, 'with id', itemId)
 
         if (!itemId && actionType !== 'create') {
-          return (0, _utils.autoReject)(
+          return (0, _lib.autoReject)(
             'Could not '.concat(actionType, ' item (see log)'),
             {
               fn: function fn() {
@@ -337,11 +332,11 @@ var createRestHook = function createRestHook(endpoint) {
         }
 
         if (['update', 'replace'].includes(actionType)) {
-          var changes = (0, _utils.getPatch)(item, oldItem)
+          var changes = (0, _lib.getPatch)(item, oldItem)
           var isPatch = actionType === 'update'
 
           if (!Object.keys(changes).length) {
-            return (0, _utils.autoReject)('No changes to save')
+            return (0, _lib.autoReject)('No changes to save')
           }
 
           payload = isPatch ? changes : item
@@ -381,7 +376,7 @@ var createRestHook = function createRestHook(endpoint) {
               }
 
               var updated = mergeOnUpdate
-                ? (0, _deepmerge['default'])(item, newData)
+                ? (0, _deepmerge.default)(item, newData)
                 : item
               onUpdate(updated) // event
 
@@ -399,7 +394,7 @@ var createRestHook = function createRestHook(endpoint) {
 
             if (['update', 'replace'].includes(actionType)) {
               item = mergeOnUpdate
-                ? (0, _deepmerge['default'])(item, newData)
+                ? (0, _deepmerge.default)(item, newData)
                 : item
               log('updating item in internal collection', item)
               newData = data.map(function(i) {
@@ -410,10 +405,10 @@ var createRestHook = function createRestHook(endpoint) {
               actionType === 'update' && onUpdate(item) // event
             } else if (actionType === 'create') {
               item = mergeOnCreate
-                ? (0, _deepmerge['default'])(item, newData)
+                ? (0, _deepmerge.default)(item, newData)
                 : item
               log('adding item to internal collection', item)
-              newData = [].concat((0, _toConsumableArray2['default'])(data), [
+              newData = [].concat((0, _toConsumableArray2.default)(data), [
                 item,
               ])
               onCreate(item) // event
@@ -446,14 +441,14 @@ var createRestHook = function createRestHook(endpoint) {
         ) // mock exit for success
 
         if (mock) {
-          return (0, _utils.autoResolve)('Success!', {
+          return (0, _lib.autoResolve)('Success!', {
             fn: resolve,
           })
         }
 
         return axios[method](getEndpoint(endpoint, itemId), payload)
           .then(resolve)
-          ['catch'](function(err) {
+          .catch(function(err) {
             return handleError(err.response)
           })
       }
@@ -479,7 +474,7 @@ var createRestHook = function createRestHook(endpoint) {
     var load = function load() {
       var loadOptions =
         arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
-      var opt = (0, _deepmerge['default'])(options, loadOptions)
+      var opt = (0, _deepmerge.default)(options, loadOptions)
       var query = opt.query,
         loadOnlyOnce = opt.loadOnlyOnce
       var fetchEndpoint = getEndpoint(endpoint, id) // if query param is a function, run it to derive up-to-date params
@@ -497,7 +492,6 @@ var createRestHook = function createRestHook(endpoint) {
           })
         )
       fetchStore
-        .setAxios(axios)
         .get(fetchEndpoint, {
           params: query,
         })
@@ -505,7 +499,7 @@ var createRestHook = function createRestHook(endpoint) {
           var data = _ref2.data
 
           try {
-            if ((0, _typeof2['default'])(data) !== 'object') {
+            if ((0, _typeof2.default)(data) !== 'object') {
               return onError(
                 'ERROR: Response not in object form... response.data =',
                 data
@@ -544,7 +538,7 @@ var createRestHook = function createRestHook(endpoint) {
             handleError(err)
           }
         })
-        ['catch'](function(err) {
+        .catch(function(err) {
           handleError(err.response || err)
         })
     } // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES
@@ -564,7 +558,7 @@ var createRestHook = function createRestHook(endpoint) {
           if (typeof filter === 'function') {
             filtered = data.filter(filter)
           } else {
-            filtered = data.filter((0, _utils.objectFilter)(filter))
+            filtered = data.filter((0, _lib.objectFilter)(filter))
           }
         }
 

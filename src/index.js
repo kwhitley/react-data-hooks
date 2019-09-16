@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useStore } from 'use-store-hook'
-import defaultAxios from 'axios'
 import deepmerge from 'deepmerge'
 import {
+  axios as fetchAxios,
   objectFilter,
   autoResolve,
   autoReject,
   getPatch,
   FetchStore,
-} from './utils'
+} from './lib'
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
@@ -51,7 +51,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   // extract options
   let {
     autoload = true,
-    axios = defaultAxios,
+    axios = fetchAxios,
     filter,
     getId = item => item.id, // handles the use-case of non-collections (will use id if present)
     initialValue,
@@ -132,6 +132,9 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       if (error.response) {
         status = error.response.status
         message = error.response.data
+      } else if (!status && Number(message)) {
+        status = Number(message)
+        message = undefined
       }
     }
 
@@ -143,7 +146,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
         isLoading: false,
         error: message || error,
       })
-    onError(message || error) // event
+    onError(message || status || error) // event
 
     // handle authentication errors
     if (onAuthenticationError && [401, 403].includes(status)) {
@@ -293,7 +296,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       })
 
     fetchStore
-      .setAxios(axios)
       .get(fetchEndpoint, { params: query })
       .then(({ data }) => {
         try {
