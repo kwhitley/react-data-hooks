@@ -14,22 +14,27 @@ describe('Collection data fetching and methods', () => {
   var endpoint
   var api
   var useCollection
+  var result, waitForNextUpdate
 
   beforeEach(() => {
     endpoint = getCollectionEndpoint()
     useCollection = createRestHook(endpoint)
     api = new MockApi()
+
+    fetchMock.getOnce(endpoint, api.get())
   })
 
   it('data defaults to empty array', async () => {
     const { result, waitForNextUpdate } = renderHook(() => useCollection())
     expect(result.current.isLoading).toEqual(true)
     expect(result.current).toHaveProperty('data', [])
+    await waitForNextUpdate()
   })
 
   it('autoloads by default', async () => {
     const { result, waitForNextUpdate } = renderHook(() => useCollection())
     expect(result.current.isLoading).toEqual(true)
+    await waitForNextUpdate()
   })
 
   it('does not autoload if { autoload: false }', async () => {
@@ -41,7 +46,6 @@ describe('Collection data fetching and methods', () => {
 
   it('fetches and returns data on instantiation', async () => {
     let expectedResponse = api.get()
-    fetchMock.getOnce(endpoint, expectedResponse)
 
     const { result, waitForNextUpdate } = renderHook(() => useCollection())
     expect(result.current.isLoading).toEqual(true)
@@ -49,6 +53,27 @@ describe('Collection data fetching and methods', () => {
     await waitForNextUpdate()
     expect(result.current.isLoading).toEqual(false)
     expect(result.current).toHaveProperty('data', expectedResponse)
+  })
+
+  it('can post to the collection endpoint', async () => {
+    let newItem = { foo: 'bar' }
+    let postResponse = api.post(newItem)
+    let initialCollection = api.get()
+    fetchMock.postOnce(endpoint, postResponse, newItem)
+
+    const { result, waitForNextUpdate } = renderHook(() => useCollection())
+    await waitForNextUpdate()
+    expect(result.current).toHaveProperty('data', initialCollection)
+
+    act(() => {
+      result.current.create(newItem)
+    })
+
+    await waitForNextUpdate()
+    expect(result.current).toHaveProperty('data', [
+      ...initialCollection,
+      postResponse,
+    ])
   })
 
   // it('can create a record with an ID', async () => {

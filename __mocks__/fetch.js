@@ -47,6 +47,7 @@ export class MockApi {
 
   delete = payload => undefined
 
+  reduce = (action, payload) => {}
   // getResponse(method = 'get', payload = undefined) {
   //   const paths = {
   //     get: () => state,
