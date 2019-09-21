@@ -15,14 +15,14 @@ var _defineProperty2 = _interopRequireDefault(
   require('@babel/runtime/helpers/defineProperty')
 )
 
-var _axiosEmulator = require('./axios-emulator')
+var _fetchAxios = require('./fetch-axios')
 
 var FetchStore = function FetchStore() {
   var _this = this
 
   ;(0, _classCallCheck2.default)(this, FetchStore)
   ;(0, _defineProperty2.default)(this, 'fetches', {})
-  ;(0, _defineProperty2.default)(this, 'fetcher', _axiosEmulator.axios)
+  ;(0, _defineProperty2.default)(this, 'fetcher', _fetchAxios.fetchAxios)
   ;(0, _defineProperty2.default)(this, 'debounce', 100)
   ;(0, _defineProperty2.default)(this, 'setAxios', function(axios) {
     _this.fetcher = axios

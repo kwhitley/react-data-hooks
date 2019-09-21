@@ -1,5 +1,5 @@
 export * from './auto-promises'
-export * from './axios-emulator'
+export * from './fetch-axios'
 export * from './fetch-store'
 export * from './get-patch'
 export * from './object-filter'

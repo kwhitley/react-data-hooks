@@ -16,14 +16,14 @@ Object.keys(_autoPromises).forEach(function(key) {
   })
 })
 
-var _axiosEmulator = require('./axios-emulator')
+var _fetchAxios = require('./fetch-axios')
 
-Object.keys(_axiosEmulator).forEach(function(key) {
+Object.keys(_fetchAxios).forEach(function(key) {
   if (key === 'default' || key === '__esModule') return
   Object.defineProperty(exports, key, {
     enumerable: true,
     get: function get() {
-      return _axiosEmulator[key]
+      return _fetchAxios[key]
     },
   })
 })

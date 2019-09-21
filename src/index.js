@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useStore } from 'use-store-hook'
 import deepmerge from 'deepmerge'
 import {
-  axios as fetchAxios,
+  fetchAxios,
   objectFilter,
   autoResolve,
   autoReject,
@@ -52,7 +52,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   let {
     autoload = true,
     axios = fetchAxios,
-    filter,
+    filter = item => item,
     getId = item => item.id, // handles the use-case of non-collections (will use id if present)
     initialValue,
     interval,
@@ -74,6 +74,11 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     transformCollection = v => v,
     transformItem = v => v,
   } = options
+
+  if (axios !== fetchAxios) {
+    log('using custom axios-fetch', axios)
+    fetchStore.setAxios(axios)
+  }
 
   // if isCollection not explicitly set, try to derive from arguments
   if (!options.hasOwnProperty('isCollection')) {
@@ -247,18 +252,17 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
         // update internal data
         isMounted && setData(newData)
+        isMounted &&
+          logAndSetMeta({
+            ...meta,
+            isLoading: false,
+            key: getHash(),
+          })
       } catch (err) {
         onError(err)
         isMounted && setError(err.message)
       }
     }
-
-    isMounted &&
-      logAndSetMeta({
-        ...meta,
-        isLoading: false,
-        key: getHash(),
-      })
 
     log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)
 
@@ -269,7 +273,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
     return axios[method](getEndpoint(endpoint, itemId), payload)
       .then(resolve)
-      .catch(err => handleError(err.response))
+      .catch(handleError)
   }
 
   const update = createActionType({ actionType: 'update', method: 'patch' })
@@ -333,9 +337,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
           handleError(err)
         }
       })
-      .catch(err => {
-        handleError(err.response || err)
-      })
+      .catch(handleError)
   }
 
   // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES

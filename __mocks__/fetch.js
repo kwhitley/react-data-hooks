@@ -48,46 +48,4 @@ export class MockApi {
   delete = payload => undefined
 
   reduce = (action, payload) => {}
-  // getResponse(method = 'get', payload = undefined) {
-  //   const paths = {
-  //     get: () => state,
-  //     post: payload => ({
-  //       id: faker.random.uuid(),
-  //       ...payload
-  //     }),
-  //     // patch: payload => ({ ...payload }),
-  //     // put: payload => ({ ...payload }),
-  //     // delete: (payload) => isCollection ? state.filter(i => i.,
-  //   }
-
-  // return paths[method](payload)
 }
-
-// reduce
-
-// if (isCollection) {
-
-// } else {
-//   return {
-//     get: () => state,
-//     post: payload => ({
-//       response: {
-//         id: faker.random.uuid(),
-//         ...payload
-//       }),
-//     patch: payload => state = ({ ...responseMap.get(ITEM_ENDPOINT), ...payload }),
-//     put: payload => state = ({ ...payload }),
-//     delete: (payload) => state = isCollection ? state.filter(i => i.,
-//   }
-// }
-// return {
-//   get: () => state,
-//   post: payload => ({ id: faker.random.uuid(), ...payload }),
-//   patch: payload => state = ({ ...responseMap.get(ITEM_ENDPOINT), ...payload }),
-//   put: payload => state = ({ ...payload }),
-//   delete: (payload) => state = isCollection ? state.filter(i => i.,
-// }
-
-// export const doSomething = (endpoint, action) => {
-
-// }

@@ -1,8 +1,8 @@
-import { axios } from './axios-emulator'
+import { fetchAxios } from './fetch-axios'
 
 export class FetchStore {
   fetches = {}
-  fetcher = axios
+  fetcher = fetchAxios
   debounce = 100
 
   setAxios = axios => {

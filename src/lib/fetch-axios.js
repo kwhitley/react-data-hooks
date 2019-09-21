@@ -1,16 +1,11 @@
-const getJSON = r => {
-  try {
+const getBody = r => {
+  const isJSON = r.headers.get('content-type') === 'application/json'
+
+  if (isJSON) {
     return r.json()
-  } catch (err) {
-    throw new TypeError('Invalid JSON response')
   }
-  // let contentType = r.headers.get('content-type')
 
-  // if (contentType && contentType.includes('application/json')) {
-  //   return r.json()
-  // }
-
-  // throw new TypeError('Invalid JSON response')
+  return r.body || r
 }
 
 const emulateAxiosResponse = data => ({ data })
@@ -24,7 +19,7 @@ const catchErrors = response => {
 }
 
 const createFetchCall = (method = 'GET') => (url, data) => {
-  let payload = undefined
+  let payload = {}
 
   if (typeof data === 'object') {
     // parse query params
@@ -42,25 +37,22 @@ const createFetchCall = (method = 'GET') => (url, data) => {
       }
     } else {
       // parse payloads for POST|PUT|PATCH
-      payload = { body: JSON.stringify(data) }
+      payload = {
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     }
   }
 
-  const content = {
-    method: method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    ...payload,
-  }
-
-  return fetch(url, content)
+  return fetch(url, { method, ...payload })
     .then(catchErrors)
-    .then(getJSON)
+    .then(getBody)
     .then(emulateAxiosResponse)
 }
 
-export const axios = {
+export const fetchAxios = {
   get: createFetchCall('GET'),
   post: createFetchCall('POST'),
   put: createFetchCall('PUT'),

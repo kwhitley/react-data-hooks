@@ -140,7 +140,7 @@ var createRestHook = function createRestHook(endpoint) {
     var _options$autoload = options.autoload,
       autoload = _options$autoload === void 0 ? true : _options$autoload,
       _options$axios = options.axios,
-      axios = _options$axios === void 0 ? _lib.axios : _options$axios,
+      axios = _options$axios === void 0 ? _lib.fetchAxios : _options$axios,
       filter = options.filter,
       _options$getId = options.getId,
       getId =
@@ -207,7 +207,12 @@ var createRestHook = function createRestHook(endpoint) {
           ? function(v) {
               return v
             }
-          : _options$transformIte // if isCollection not explicitly set, try to derive from arguments
+          : _options$transformIte
+
+    if (axios !== _lib.fetchAxios) {
+      log('using custom axios-fetch', axios)
+      fetchStore.setAxios(axios)
+    } // if isCollection not explicitly set, try to derive from arguments
 
     if (!options.hasOwnProperty('isCollection')) {
       // for collections, clear id, and derive options from first param
@@ -421,19 +426,19 @@ var createRestHook = function createRestHook(endpoint) {
             } // update internal data
 
             isMounted && setData(newData)
+            isMounted &&
+              logAndSetMeta(
+                _objectSpread({}, meta, {
+                  isLoading: false,
+                  key: getHash(),
+                })
+              )
           } catch (err) {
             onError(err)
             isMounted && setError(err.message)
           }
         }
 
-        isMounted &&
-          logAndSetMeta(
-            _objectSpread({}, meta, {
-              isLoading: false,
-              key: getHash(),
-            })
-          )
         log(
           'calling "'.concat(method, '" to'),
           getEndpoint(endpoint, itemId),
@@ -448,9 +453,7 @@ var createRestHook = function createRestHook(endpoint) {
 
         return axios[method](getEndpoint(endpoint, itemId), payload)
           .then(resolve)
-          .catch(function(err) {
-            return handleError(err.response)
-          })
+          .catch(handleError)
       }
     }
 
@@ -538,9 +541,7 @@ var createRestHook = function createRestHook(endpoint) {
             handleError(err)
           }
         })
-        .catch(function(err) {
-          handleError(err.response || err)
-        })
+        .catch(handleError)
     } // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES
 
     ;(0, _react.useEffect)(
