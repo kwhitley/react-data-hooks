@@ -34,7 +34,7 @@ describe('BEHAVIOR', () => {
     fetchMock.getOnce(endpoint, api.get())
   })
 
-  describe('autoloading', () => {
+  describe('loading data', () => {
     it('autoloads by default', async () => {
       const { hook, compare, pause } = extractHook(() => useCollection())
 
@@ -48,6 +48,21 @@ describe('BEHAVIOR', () => {
       )
 
       compare('isLoading', false)
+    })
+
+    it('allows manual loading via the load() function', async () => {
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection({ autload: false })
+      )
+
+      compare('data', [])
+
+      act(() => {
+        hook().load()
+      })
+
+      await pause()
+      compare('data', api.get())
     })
   })
 
@@ -168,6 +183,67 @@ describe('BEHAVIOR', () => {
 
       await pause()
       compare('filtered', api.get())
+    })
+
+    it(`filtered can use a filter function (e.g. { filter: item => !item.flag })`, async () => {
+      let flaggedFeed = api.get().map(i => ({ ...i, flag: Math.random() > 5 }))
+      fetchMock.getOnce(endpoint, flaggedFeed, { overwriteRoutes: true })
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection({ filter: i => i.flag })
+      )
+
+      await pause()
+      compare('filtered', flaggedFeed.filter(i => i.flag))
+    })
+
+    it('filtered can use a filter object (e.g. { filter: { flag: false } })', async () => {
+      let flaggedFeed = api.get().map(i => ({ ...i, flag: Math.random() > 5 }))
+      fetchMock.getOnce(endpoint, flaggedFeed, { overwriteRoutes: true })
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection({ filter: { flag: true } })
+      )
+
+      await pause()
+      compare('filtered', flaggedFeed.filter(i => i.flag))
+    })
+  })
+
+  describe('transforming', () => {
+    it('transform reshapes payload (e.g. { transform: r => r.data })', async () => {
+      fetchMock.getOnce(
+        endpoint,
+        { data: api.get() },
+        { overwriteRoutes: true }
+      )
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection({ transform: r => r.data })
+      )
+
+      await pause()
+      compare('data', api.get())
+    })
+
+    // TODO
+    it('transform reshapes PATCH payload', async () => {
+      const updated = { ...item, foo: 'bar' }
+      fetchMock.patchOnce(itemEndpoint, { data: updated })
+      fetchMock.getOnce(
+        endpoint,
+        { data: api.get() },
+        { overwriteRoutes: true }
+      )
+
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection({ transform: r => r.data })
+      )
+      await pause()
+
+      act(() => {
+        hook().update({ ...item, foo: 'bar' }, item)
+      })
+
+      await pause()
+      compare('data', collection.map(i => (i.id !== item.id ? i : updated)))
     })
   })
 })

@@ -141,7 +141,13 @@ var createRestHook = function createRestHook(endpoint) {
       autoload = _options$autoload === void 0 ? true : _options$autoload,
       _options$axios = options.axios,
       axios = _options$axios === void 0 ? _lib.fetchAxios : _options$axios,
-      filter = options.filter,
+      _options$filter = options.filter,
+      filter =
+        _options$filter === void 0
+          ? function(item) {
+              return item
+            }
+          : _options$filter,
       _options$getId = options.getId,
       getId =
         _options$getId === void 0
