@@ -261,8 +261,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
             key: getHash(),
           })
       } catch (err) {
-        onError(err)
-        isMounted && setError(err.message)
+        handleError(err)
       }
     }
 

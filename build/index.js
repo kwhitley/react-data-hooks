@@ -445,8 +445,7 @@ var createRestHook = function createRestHook(endpoint) {
                 })
               )
           } catch (err) {
-            onError(err)
-            isMounted && setError(err.message)
+            handleError(err)
           }
         }
 
