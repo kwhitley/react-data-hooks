@@ -1,5 +1,6 @@
 const getBody = r => {
-  const isJSON = r.headers.get('content-type') === 'application/json'
+  const isJSON =
+    (r.headers.get('content-type') || '').indexOf('application/json') !== -1
 
   if (isJSON) {
     return r.json()
