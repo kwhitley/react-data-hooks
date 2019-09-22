@@ -143,19 +143,21 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       }
     }
 
-    log('handleError executed', error)
+    const errorObj = { message, status, trace: error }
+
+    log('handleError executed', errorObj)
 
     isMounted &&
       logAndSetMeta({
         ...meta,
         isLoading: false,
-        error: message || error,
+        error: errorObj,
       })
-    onError(message || status || error) // event
+    onError() // event
 
     // handle authentication errors
     if (onAuthenticationError && [401, 403].includes(status)) {
-      onAuthenticationError(error)
+      onAuthenticationError(errorObj)
     }
   }
 

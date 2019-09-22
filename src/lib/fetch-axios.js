@@ -12,7 +12,10 @@ const emulateAxiosResponse = data => ({ data })
 
 const catchErrors = response => {
   if (response.status >= 400) {
-    throw new Error(Number(response.status))
+    const errorResponse = new Error(response.body || response.statusText)
+    errorResponse.status = Number(response.status)
+
+    throw errorResponse
   }
 
   return response

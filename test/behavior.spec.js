@@ -177,6 +177,37 @@ describe('BEHAVIOR', () => {
     })
   })
 
+  describe('errors', () => {
+    it('sets error prop and calls onError() with transform error', async () => {
+      const onError = jest.fn()
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection({
+          transform: d => d.will.break,
+          onError,
+        })
+      )
+      expect(hook().error).toBeUndefined()
+
+      await pause()
+      expect(hook().error).not.toBeUndefined()
+      expect(onError).toHaveBeenCalled()
+    })
+
+    it('sets error prop and calls onError() with response status error', async () => {
+      fetchMock.getOnce(endpoint, 404, { overwriteRoutes: true })
+      const onError = jest.fn()
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection({ onError })
+      )
+      expect(hook().error).toBeUndefined()
+
+      await pause()
+      expect(hook().error).not.toBeUndefined()
+      expect(hook().error.message).toBe('Not Found')
+      expect(onError).toHaveBeenCalled()
+    })
+  })
+
   describe('filtering', () => {
     it('filtered returns the original data array if no filter set', async () => {
       const { hook, compare, pause } = extractHook(() => useCollection())
@@ -223,7 +254,6 @@ describe('BEHAVIOR', () => {
       compare('data', api.get())
     })
 
-    // TODO
     it('transform reshapes PATCH payload', async () => {
       const updated = { ...item, foo: 'bar' }
       fetchMock.patchOnce(itemEndpoint, { data: updated })
