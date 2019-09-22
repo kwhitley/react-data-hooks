@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useStore } from 'use-store-hook'
 import deepmerge from 'deepmerge'
-import {
-  fetchAxios,
-  objectFilter,
-  autoResolve,
-  autoReject,
-  getPatch,
-  FetchStore,
-} from './lib'
+import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
+
+const LOG_PREFIX = '[react-use-rest]:'
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
@@ -32,9 +27,7 @@ const createLogAndSetMeta = ({ log, setMeta }) => newMeta => {
   setMeta(newMeta)
 }
 
-export const createRestHook = (endpoint, createHookOptions = {}) => (
-  ...args
-) => {
+export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
   let [id, hookOptions] = args
   let isMounted = true
   let idExplicitlyPassed = args.length && typeof args[0] !== 'object'
@@ -76,6 +69,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   } = options
 
   let isCollectionExplicitlySet = options.hasOwnProperty('isCollection')
+  let isFixedEndpoint = isCollection === false
 
   if (axios !== fetchAxios) {
     log('using custom axios-fetch', axios)
@@ -88,19 +82,20 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     if (idExplicitlyPassed) {
       // e.g. useHook('foo') useHook(3)
       isCollection = false
+      isFixedEndpoint = true
     } else {
       isCollection = true
     }
   } else {
     // isCollection explicitly set
     if (isCollection === false && idExplicitlyPassed) {
-      onError({
-        message:
-          '[react-use-rest]: id should not be explicitly passed with option { isCollection: false }',
-        isCollection,
-        idExplicitlyPassed,
-        args,
-      })
+      let errorObj = new Error(`${LOG_PREFIX} id should not be explicitly passed with option { isCollection: false }`)
+      errorObj.isCollection = isCollection
+      errorObj.idExplicitlyPassed = idExplicitlyPassed
+      errorObj.args = args
+
+      onError(errorObj)
+      throw errorObj
     }
   }
 
@@ -108,11 +103,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   log = log === true ? console.log : log
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
-  initialValue = options.hasOwnProperty('initialValue')
-    ? initialValue
-    : isCollection
-    ? []
-    : undefined
+  initialValue = options.hasOwnProperty('initialValue') ? initialValue : isCollection ? [] : undefined
 
   let queryKey =
     typeof query === 'object'
@@ -123,13 +114,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       ? JSON.stringify({ dynamic: true })
       : undefined
 
-  let key =
-    'resthook:' +
-    getEndpoint(
-      endpoint,
-      (!isCollection && (id || ':id')) || undefined,
-      queryKey
-    )
+  let key = 'resthook:' + getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
 
   let [data, setData] = useStore(key, initialValue, options)
   let [loadedOnce, setLoadedOnce] = useStore(key + ':loaded.once', false)
@@ -158,7 +143,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
     const errorObj = { message, status, trace: error }
 
-    log('handleError executed', errorObj)
+    log(`${LOG_PREFIX} handleError executed`, errorObj)
 
     isMounted &&
       logAndSetMeta({
@@ -175,15 +160,16 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   }
 
   const createActionType = (actionOptions = {}) => (item, oldItem) => {
-    let itemId = id || getId(item)
+    let itemId = id || (isFixedEndpoint ? undefined : getId(item))
     let { actionType = 'update', method = 'patch' } = actionOptions
     let payload = undefined
 
     log(actionType.toUpperCase(), 'on', item, 'with id', itemId)
-    if (!itemId && actionType !== 'create') {
+
+    if (!isFixedEndpoint && !itemId && actionType !== 'create') {
       return autoReject(`Could not ${actionType} item (see log)`, {
         fn: () => {
-          console.error('option.getId(item) did not return a valid ID', item)
+          onError({ message: `${LOG_PREFIX} option.getId(item) did not return a valid ID`, item })
         },
       })
     }
@@ -224,7 +210,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
           log(`non-collection action ${actionType}: setting data to`, item)
           if (actionType === 'remove') {
             onRemove(data)
-            isMounted && setData()
+            return isMounted && setData()
           }
 
           let updated = mergeOnUpdate ? deepmerge(item, newData) : item
@@ -320,10 +306,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       .then(({ data }) => {
         try {
           if (typeof data !== 'object') {
-            return onError(
-              'ERROR: Response not in object form... response.data =',
-              data
-            )
+            return onError('ERROR: Response not in object form... response.data =', data)
           }
 
           log('GET RESPONSE:', data)
