@@ -19,6 +19,7 @@ describe('BEHAVIOR', () => {
   var endpoint
   var api
   var useCollection
+  var useItem
   var collection
   var item
   var itemEndpoint
@@ -30,8 +31,10 @@ describe('BEHAVIOR', () => {
     collection = api.get()
     item = randomItem(collection)
     itemEndpoint = `${endpoint}/${item.id}`
+    useItem = createRestHook(itemEndpoint, { isCollection: false })
 
     fetchMock.getOnce(endpoint, api.get())
+    fetchMock.getOnce(itemEndpoint, item)
   })
 
   describe('loading data', () => {
@@ -142,6 +145,23 @@ describe('BEHAVIOR', () => {
       compare('data', collection.map(i => (i.id !== item.id ? i : updated)))
     })
 
+    it('can update (PATCH) an item to an item endpoint', async () => {
+      const updated = { ...item, foo: 'bar' }
+
+      fetchMock.patchOnce(itemEndpoint, updated)
+
+      const { hook, compare, pause } = extractHook(() => useCollection(item.id))
+      await pause()
+      compare('data', item)
+
+      // act(() => {
+      //   hook().update({ ...item, foo: 'bar' }, item)
+      // })
+
+      // await pause()
+      // compare('data', updated)
+    })
+
     it('can replace (PUT) an item to the collection endpoint', async () => {
       const updated = { id: item.id, foo: 'bar' }
 
@@ -205,6 +225,54 @@ describe('BEHAVIOR', () => {
       expect(hook().error).not.toBeUndefined()
       expect(hook().error.message).toBe('Not Found')
       expect(onError).toHaveBeenCalled()
+    })
+  })
+
+  describe('events', () => {
+    it('calls onUpdate with PATCH from collection', async () => {
+      fetchMock.patchOnce(itemEndpoint, {})
+      const onUpdate = jest.fn()
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection({ onUpdate })
+      )
+      await pause()
+
+      act(() => {
+        hook().update({ ...item, foo: 'bar' }, item)
+      })
+
+      await pause()
+      expect(onUpdate).toHaveBeenCalled()
+    })
+
+    it('calls onUpdate with PATCH from collection with ID param (item mode) ', async () => {
+      fetchMock.patchOnce(itemEndpoint, item)
+      const onUpdate = jest.fn()
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection(item.id, { onUpdate })
+      )
+      await pause()
+
+      act(() => {
+        hook().update({ ...item, foo: 'bar' }, item)
+      })
+
+      await pause()
+      expect(onUpdate).toHaveBeenCalled()
+    })
+
+    it('calls onUpdate with PATCH from item hook { isCollection: false } ', async () => {
+      fetchMock.patchOnce(itemEndpoint, item)
+      const onUpdate = jest.fn()
+      const { hook, compare, pause } = extractHook(() => useItem({ onUpdate }))
+      await pause()
+
+      act(() => {
+        hook().update({ ...item, foo: 'bar' }, item)
+      })
+
+      await pause()
+      expect(onUpdate).toHaveBeenCalled()
     })
   })
 

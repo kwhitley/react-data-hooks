@@ -75,19 +75,32 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     transformItem = v => v,
   } = options
 
+  let isCollectionExplicitlySet = options.hasOwnProperty('isCollection')
+
   if (axios !== fetchAxios) {
     log('using custom axios-fetch', axios)
     fetchStore.setAxios(axios)
   }
 
   // if isCollection not explicitly set, try to derive from arguments
-  if (!options.hasOwnProperty('isCollection')) {
+  if (!isCollectionExplicitlySet) {
     // for collections, clear id, and derive options from first param
     if (idExplicitlyPassed) {
       // e.g. useHook('foo') useHook(3)
       isCollection = false
     } else {
       isCollection = true
+    }
+  } else {
+    // isCollection explicitly set
+    if (isCollection === false && idExplicitlyPassed) {
+      onError({
+        message:
+          '[react-use-rest]: id should not be explicitly passed with option { isCollection: false }',
+        isCollection,
+        idExplicitlyPassed,
+        args,
+      })
     }
   }
 
@@ -210,12 +223,14 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
         if (!isCollection) {
           log(`non-collection action ${actionType}: setting data to`, item)
           if (actionType === 'remove') {
-            return isMounted && setData()
+            onRemove(data)
+            isMounted && setData()
           }
 
           let updated = mergeOnUpdate ? deepmerge(item, newData) : item
 
-          onUpdate(updated) // event
+          actionType === 'replace' && onReplace(updated) // event
+          actionType === 'update' && onUpdate(updated) // event
 
           isMounted && setData(updated)
 
