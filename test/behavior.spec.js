@@ -239,6 +239,31 @@ describe('BEHAVIOR', () => {
     })
   })
 
+  describe('key generation', () => {
+    it('returns new key after basic GET', async () => {
+      const { hook, compare, pause } = extractHook(() => useCollection())
+      const key = hook().key
+
+      await pause()
+      expect(hook().key).not.toBe(key)
+    })
+
+    it('returns new key after operations (e.g. PATCH)', async () => {
+      const { hook, compare, pause } = extractHook(() => useCollection())
+      fetchMock.patchOnce(itemEndpoint, {})
+
+      await pause()
+      const key = hook().key
+
+      act(() => {
+        hook().update({ ...item, foo: 'bar' }, item)
+      })
+
+      await pause()
+      expect(hook().key).not.toBe(key)
+    })
+  })
+
   describe('transforming', () => {
     it('transform reshapes payload (e.g. { transform: r => r.data })', async () => {
       fetchMock.getOnce(

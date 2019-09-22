@@ -298,19 +298,24 @@ var createRestHook = function createRestHook(endpoint) {
         }
       }
 
-      log('handleError executed', error)
+      var errorObj = {
+        message: message,
+        status: status,
+        trace: error,
+      }
+      log('handleError executed', errorObj)
       isMounted &&
         logAndSetMeta(
           _objectSpread({}, meta, {
             isLoading: false,
-            error: message || error,
+            error: errorObj,
           })
         )
-      onError(message || status || error) // event
+      onError() // event
       // handle authentication errors
 
       if (onAuthenticationError && [401, 403].includes(status)) {
-        onAuthenticationError(error)
+        onAuthenticationError(errorObj)
       }
     }
 
