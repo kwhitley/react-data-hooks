@@ -52,7 +52,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   let {
     autoload = true,
     axios = fetchAxios,
-    filter = item => item,
+    filter,
     getId = item => item.id, // handles the use-case of non-collections (will use id if present)
     initialValue,
     interval,
@@ -328,6 +328,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
             logAndSetMeta({
               ...meta,
+              filtered: data, // set filtered to loaded data... useEffect will trigger re-render with filtered data
               isLoading: false,
               error: undefined,
               key: getHash(),
