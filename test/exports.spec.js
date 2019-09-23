@@ -1,5 +1,5 @@
 import { renderHook, cleanup, act, unmount } from '@testing-library/react-hooks'
-import { createRestHook } from '../build'
+import { createRestHook } from '../src'
 
 describe('react-use-rest', () => {
   describe('EXPORTS', () => {
@@ -33,9 +33,7 @@ describe('react-use-rest', () => {
       let { type, name, defaults } = attribute
       let hasDefaults = attribute.hasOwnProperty('defaults')
 
-      test(`returns ${name} property (${type}) ${
-        hasDefaults ? 'with default value = ' + defaults : ''
-      }`, () => {
+      test(`returns ${name} property (${type}) ${hasDefaults ? 'with default value = ' + defaults : ''}`, () => {
         expect(hook.hasOwnProperty(name)).toBe(true)
         expect(typeof hook[name]).toBe(type)
         if (defaults) {
