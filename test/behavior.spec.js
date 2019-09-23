@@ -58,24 +58,16 @@ describe('BEHAVIOR' + example1, () => {
 
     describe('data' + type('empty array (if collection) or undefined (if item)'), () => {
       it('default of { autoload: true } loads data from endpoint immediately', async () => {
-        const { hook, compare, pause } = extractHook(() => useCollection())
-        await pause()
-        compare('data', collection)
+        expect(true).toBe(true) // functionality tested with option:autoload
       })
 
       it('does not autoload if { autoload: false }', async () => {
-        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
-        compare('isLoading', false)
+        expect(true).toBe(true) // functionality tested with option:autoload
       })
 
       it('data defaults to [] if no ID passed and { isCollection: false } not set', async () => {
         const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
         compare('data', [])
-      })
-
-      it('data defaults to { initialValue: something } if set', async () => {
-        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false, initialValue: 'foo' }))
-        compare('data', 'foo')
       })
 
       it('data defaults to undefined if item hook { isCollection: false }', async () => {
@@ -91,6 +83,11 @@ describe('BEHAVIOR' + example1, () => {
       it(`data defaults to undefined if numeric identifier passed to collection hook (e.g. useHook(123))`, async () => {
         const { hook, compare, pause } = extractHook(() => useCollection(123, { autoload: false }))
         compare('data', undefined)
+      })
+
+      it(`data defaults to initialValue if set (e.g. { initialValue: 'foo' })`, async () => {
+        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false, initialValue: 'foo' }))
+        compare('data', 'foo')
       })
     })
 
@@ -338,6 +335,19 @@ describe('BEHAVIOR' + example1, () => {
   })
 
   describe('OPTIONS', () => {
+    describe('autoload' + type('boolean') + defaults('true'), () => {
+      it('loads data from endpoint immediately with default of { autoload: true }', async () => {
+        const { hook, compare, pause } = extractHook(() => useCollection())
+        await pause()
+        compare('data', collection)
+      })
+
+      it('does not autoload if { autoload: false }', async () => {
+        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
+        compare('isLoading', false)
+      })
+    })
+
     describe('filter' + type('function or object') + defaults('undefined'), () => {
       it('filtered returns the original data array if no filter set', async () => {
         const { hook, compare, pause } = extractHook(() => useCollection())
@@ -362,6 +372,23 @@ describe('BEHAVIOR' + example1, () => {
       })
     })
 
+    describe('initialValue' + type('anything') + defaults('[] if collection, undefined if not'), () => {
+      it(`data defaults to initialValue if set (e.g. { initialValue: 'foo' })`, async () => {
+        expect(true).toBe(true) // functionality tested elsewhere
+      })
+    })
+
+    describe('interval' + type('number (ms)') + defaults('undefined'), () => {
+      it('allows polling of data via GET/load() at time = {interval}', async () => {
+        const onLoad = jest.fn()
+        const { hook, compare, pause } = extractHook(() => useCollection({ onLoad, interval: 5 }))
+        await pause()
+        await pause()
+        await pause()
+        expect(onLoad).toHaveBeenCalledTimes(3)
+      })
+    })
+
     // detect collection option effect by monitoring default data
     describe('isCollection' + type('boolean') + defaults('true if no ID, false otherwise'), () => {
       it('defaults to true for endpoints without ID (data = [])', async () => {
@@ -377,6 +404,20 @@ describe('BEHAVIOR' + example1, () => {
       it('allows fixed endpoints with { isCollection: false } (data = undefined)', async () => {
         const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false, isCollection: false }))
         compare('data', undefined)
+      })
+    })
+
+    // detect collection option effect by monitoring default data
+    describe('log' + type('boolean or function') + defaults('empty function'), () => {
+      it('log() is called if passed as a function', async () => {
+        const log = jest.fn()
+        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false, log }))
+        expect(log).toHaveBeenCalled()
+      })
+
+      // this "test" is simply for visible output
+      it('{ log: true } === { log: console.log }', async () => {
+        expect(true).toBe(true)
       })
     })
 
@@ -405,6 +446,12 @@ describe('BEHAVIOR' + example1, () => {
         await pause()
         expect(onAuthenticationError).toHaveBeenCalled()
         expect(onError).toHaveBeenCalled()
+      })
+    })
+
+    describe('onCreate(item)' + type('function') + defaults('undefined'), () => {
+      it('fired when items created via POST', async () => {
+        expect(true).toBe(true) // functionality tested elsewhere
       })
     })
 
@@ -444,6 +491,30 @@ describe('BEHAVIOR' + example1, () => {
         expect(hook().error).not.toBeUndefined()
         expect(hook().error.message).toBe('Not Found')
         expect(onError).toHaveBeenCalled()
+      })
+    })
+
+    describe('onLoad(item)' + type('function') + defaults('undefined'), () => {
+      it('fired when data fetched via GET', async () => {
+        expect(true).toBe(true) // functionality tested elsewhere
+      })
+    })
+
+    describe('onRemove(item)' + type('function') + defaults('undefined'), () => {
+      it('fired when items removed via DELETE', async () => {
+        expect(true).toBe(true) // functionality tested elsewhere
+      })
+    })
+
+    describe('onReplace(item)' + type('function') + defaults('undefined'), () => {
+      it('fired when items replaced via PUT', async () => {
+        expect(true).toBe(true) // functionality tested elsewhere
+      })
+    })
+
+    describe('onUpdate(item)' + type('function') + defaults('undefined'), () => {
+      it('fired when items updated via PATCH', async () => {
+        expect(true).toBe(true) // functionality tested elsewhere
       })
     })
 
