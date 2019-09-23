@@ -293,9 +293,6 @@ describe('BEHAVIOR' + example1, () => {
     describe('update(item|changes, oldItem)' + type('function'), () => {
       it('sends PATCH, updates internal collection, and fires onUpdate(item) when used with collection hook', async () => {
         const onUpdate = jest.fn()
-        // const updated = { ...item, foo: 'bar' }
-        // fetchMock.patchOnce(itemEndpoint, updated)
-
         const { hook, compare, pause } = extractHook(() => useCollection({ onUpdate }))
         await pause()
         compare('data', collection)
@@ -491,6 +488,26 @@ describe('BEHAVIOR' + example1, () => {
         expect(hook().error).not.toBeUndefined()
         expect(hook().error.message).toBe('Not Found')
         expect(onError).toHaveBeenCalled()
+      })
+
+      it('intercepts and prevents other success events (e.g. onUpdate, onCreate, onReplace, etc)', async () => {
+        const onLoad = jest.fn()
+        const onError = jest.fn()
+        const onUpdate = jest.fn()
+        fetchMock.getOnce(endpoint, 401, { overwriteRoutes: true })
+        fetchMock.patchOnce(itemEndpoint, 401, { overwriteRoutes: true })
+
+        const { hook, compare, pause } = extractHook(() => useCollection({ onUpdate, onError, onLoad }))
+        await pause()
+        expect(onError).toHaveBeenCalled()
+        expect(onLoad).not.toHaveBeenCalled()
+
+        act(() => {
+          hook().update(updated, item)
+        })
+        await pause()
+        expect(onError).toHaveBeenCalledTimes(2)
+        expect(onUpdate).not.toHaveBeenCalled()
       })
     })
 
