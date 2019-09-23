@@ -63,9 +63,9 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     mergeOnUpdate = true,
     mock,
     query = {},
-    transform = v => v,
-    transformCollection = v => v,
-    transformItem = v => v,
+    transform,
+    transformCollection,
+    transformItem,
   } = options
 
   let isCollectionExplicitlySet = options.hasOwnProperty('isCollection')
@@ -198,12 +198,18 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     const resolve = response => {
       try {
-        let newData = transform(response.data)
-        log('AFTER transform:', newData)
+        let newData = response.data
 
-        // if collection, transform as collection
-        newData = transformItem(newData)
-        log('AFTER transformItem:', newData)
+        if (transform) {
+          newData = transform(response.data)
+          log('AFTER transform:', newData)
+        }
+
+        // these calls only are fired against non-collection endpoints
+        if (transformItem) {
+          newData = transformItem(newData)
+          log('AFTER transformItem:', newData)
+        }
 
         // short circuit for non-collection calls
         if (!isCollection) {
@@ -312,12 +318,26 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           log('GET RESPONSE:', data)
 
           // all data gets base transform
-          data = transform(data)
-          log('AFTER transform:', data)
+
+          if (transform) {
+            data = transform(data)
+            log('AFTER transform:', data)
+          }
 
           // if collection, transform as collection
-          data = isCollection ? transformCollection(data) : transformItem(data)
-          log(`AFTER transform${isCollection ? 'Collection' : 'Item'}:`, data)
+          if (isCollection && transformCollection) {
+            data = transformCollection(data)
+            log('AFTER transformCollection:', data)
+          }
+
+          if (transformItem) {
+            if (isCollection && data && data.length) {
+              data = data.map(transformItem)
+            } else {
+              data = transformItem(data)
+            }
+            log('AFTER transformItem:', data)
+          }
 
           if (isMounted) {
             setData(data)
@@ -406,11 +426,13 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     return exit
   }, [id])
 
+  let loadFunction = eventable(load)
+
   return {
     data,
     filtered: meta.filtered,
-    load: eventable(load),
-    refresh: eventable(load),
+    load: loadFunction,
+    refresh: loadFunction,
     create,
     remove,
     update,
