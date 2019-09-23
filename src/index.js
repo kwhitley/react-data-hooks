@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useStore } from 'use-store-hook'
 import deepmerge from 'deepmerge'
 import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
@@ -29,7 +29,8 @@ const createLogAndSetMeta = ({ log, setMeta }) => newMeta => {
 
 export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
   let [id, hookOptions] = args
-  let isMounted = true
+  let isMountedRef = useRef(true)
+  let isMounted = isMountedRef.current
   let idExplicitlyPassed = args.length && typeof args[0] !== 'object'
 
   if (typeof id === 'object' && hookOptions === undefined) {
@@ -52,7 +53,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     isCollection,
     loadOnlyOnce = false,
     log = () => {},
-    onAuthenticationError = () => {},
+    onAuthenticationError,
     onCreate = () => {},
     onError = console.error,
     onLoad = () => {},
@@ -141,7 +142,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       }
     }
 
-    const errorObj = { message, status, trace: error }
+    const errorObj = new Error(message)
+    errorObj.status = status
+    errorObj.trace = error
+    // const errorObj = new ErrorObj({ message, status, trace: error })
 
     log(`${LOG_PREFIX} handleError executed`, errorObj)
 
@@ -151,11 +155,12 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         isLoading: false,
         error: errorObj,
       })
-    onError() // event
 
     // handle authentication errors
-    if (onAuthenticationError && [401, 403].includes(status)) {
+    if (typeof onAuthenticationError === 'function' && [401, 403].includes(status)) {
       onAuthenticationError(errorObj)
+    } else {
+      onError(errorObj)
     }
   }
 
@@ -407,7 +412,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
       log('unmounting data hook')
 
-      isMounted = false
+      isMountedRef.current = false
     }
 
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {

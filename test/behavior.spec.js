@@ -406,15 +406,26 @@ describe('BEHAVIOR' + example1, () => {
 
     // detect collection option effect by monitoring default data
     describe('log' + type('boolean or function') + defaults('empty function'), () => {
-      it('log() is called if passed as a function', async () => {
+      it('logging is turned off by default', async () => {
+        let originalLog = window.console.log
+        let log = (window.console.log = jest.fn())
+        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
+        expect(log).not.toHaveBeenCalled()
+        window.console.log = originalLog
+      })
+
+      it('uses console.log if { log: true }', async () => {
+        let originalLog = window.console.log
+        let log = (window.console.log = jest.fn())
+        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false, log: true }))
+        expect(log).toHaveBeenCalled()
+        window.console.log = originalLog
+      })
+
+      it('can accept any function to handle log (e.g. { log: console.info })', async () => {
         const log = jest.fn()
         const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false, log }))
         expect(log).toHaveBeenCalled()
-      })
-
-      // this "test" is simply for visible output
-      it('{ log: true } === { log: console.log }', async () => {
-        expect(true).toBe(true)
       })
     })
 
@@ -435,14 +446,14 @@ describe('BEHAVIOR' + example1, () => {
         expect(onAuthenticationError).toHaveBeenCalled()
       })
 
-      it('fires onError() as well, when defined', async () => {
+      it('does not fire onError() on 401/403 if onAuthenticationError() defined', async () => {
         fetchMock.getOnce(endpoint, 403, { overwriteRoutes: true })
         const onAuthenticationError = jest.fn()
         const onError = jest.fn()
         const { hook, compare, pause } = extractHook(() => useCollection({ onAuthenticationError, onError }))
         await pause()
         expect(onAuthenticationError).toHaveBeenCalled()
-        expect(onError).toHaveBeenCalled()
+        expect(onError).not.toHaveBeenCalled()
       })
     })
 
@@ -453,16 +464,32 @@ describe('BEHAVIOR' + example1, () => {
     })
 
     describe('onError({ message, status? })' + type('function') + defaults('console.log'), () => {
-      it('throws and calls onError() if passed an ID when option { isCollection: false }', async () => {
-        const onError = jest.fn()
-        expect(() =>
-          useCollection(12, {
-            isCollection: false,
-            onError,
-          })
-        ).toThrow()
+      it('throws error if passed an ID when option { isCollection: false }', async () => {
+        expect(() => useCollection(12, { isCollection: false })).toThrow()
+      })
 
+      it('returned error obj toString() === err.message', async () => {
+        fetchMock.getOnce(endpoint, 401, { overwriteRoutes: true })
+        const onError = jest.fn(err => err.toString())
+        const { hook, compare, pause } = extractHook(() => useCollection({ onError }))
+        await pause()
+        expect(onError).toHaveReturnedWith('Error: Unauthorized')
+      })
+
+      it('containst status code for response errors', async () => {
+        fetchMock.getOnce(endpoint, 401, { overwriteRoutes: true })
+        const onError = jest.fn(err => err.status)
+        const { hook, compare, pause } = extractHook(() => useCollection({ onError }))
+        await pause()
+        expect(onError).toHaveReturnedWith(401)
+      })
+
+      it('containst no status code for try/catch errors', async () => {
+        const onError = jest.fn(err => err.status)
+        const { hook, compare, pause } = extractHook(() => useCollection({ transform: d => d.will.break, onError }))
+        await pause()
         expect(onError).toHaveBeenCalled()
+        expect(onError).toHaveReturnedWith(undefined)
       })
 
       it('sets error prop and calls onError() with transform error', async () => {
@@ -487,6 +514,14 @@ describe('BEHAVIOR' + example1, () => {
         await pause()
         expect(hook().error).not.toBeUndefined()
         expect(hook().error.message).toBe('Not Found')
+        expect(onError).toHaveBeenCalled()
+      })
+
+      it('sets calls onError() with 401/403 errors if onAuthenticationError() not defined', async () => {
+        fetchMock.getOnce(endpoint, 401, { overwriteRoutes: true })
+        const onError = jest.fn()
+        const { hook, compare, pause } = extractHook(() => useCollection({ onError }))
+        await pause()
         expect(onError).toHaveBeenCalled()
       })
 
