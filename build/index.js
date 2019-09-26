@@ -7,17 +7,11 @@ Object.defineProperty(exports, '__esModule', {
 })
 exports.createRestHook = void 0
 
-var _toConsumableArray2 = _interopRequireDefault(
-  require('@babel/runtime/helpers/toConsumableArray')
-)
+var _toConsumableArray2 = _interopRequireDefault(require('@babel/runtime/helpers/toConsumableArray'))
 
-var _defineProperty2 = _interopRequireDefault(
-  require('@babel/runtime/helpers/defineProperty')
-)
+var _defineProperty2 = _interopRequireDefault(require('@babel/runtime/helpers/defineProperty'))
 
-var _slicedToArray2 = _interopRequireDefault(
-  require('@babel/runtime/helpers/slicedToArray')
-)
+var _slicedToArray2 = _interopRequireDefault(require('@babel/runtime/helpers/slicedToArray'))
 
 var _typeof2 = _interopRequireDefault(require('@babel/runtime/helpers/typeof'))
 
@@ -53,24 +47,17 @@ function _objectSpread(target) {
       Object.defineProperties(target, Object.getOwnPropertyDescriptors(source))
     } else {
       ownKeys(source).forEach(function(key) {
-        Object.defineProperty(
-          target,
-          key,
-          Object.getOwnPropertyDescriptor(source, key)
-        )
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key))
       })
     }
   }
   return target
 }
 
-// helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
+var LOG_PREFIX = '[react-use-rest]:' // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
+
 var getEndpoint = function getEndpoint() {
-  for (
-    var _len = arguments.length, parts = new Array(_len), _key = 0;
-    _key < _len;
-    _key++
-  ) {
+  for (var _len = arguments.length, parts = new Array(_len), _key = 0; _key < _len; _key++) {
     parts[_key] = arguments[_key]
   }
 
@@ -111,22 +98,17 @@ var createLogAndSetMeta = function createLogAndSetMeta(_ref) {
 }
 
 var createRestHook = function createRestHook(endpoint) {
-  var createHookOptions =
-    arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {}
+  var createHookOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {}
   return function() {
-    for (
-      var _len2 = arguments.length, args = new Array(_len2), _key2 = 0;
-      _key2 < _len2;
-      _key2++
-    ) {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       args[_key2] = arguments[_key2]
     }
 
     var id = args[0],
       hookOptions = args[1]
-    var isMounted = true
-    var idExplicitlyPassed =
-      args.length && (0, _typeof2.default)(args[0]) !== 'object'
+    var isMountedRef = (0, _react.useRef)(true)
+    var isMounted = isMountedRef.current
+    var idExplicitlyPassed = args.length && (0, _typeof2.default)(args[0]) !== 'object'
 
     if ((0, _typeof2.default)(id) === 'object' && hookOptions === undefined) {
       // e.g. useHook({ something })
@@ -153,84 +135,66 @@ var createRestHook = function createRestHook(endpoint) {
       interval = options.interval,
       isCollection = options.isCollection,
       _options$loadOnlyOnce = options.loadOnlyOnce,
-      loadOnlyOnce =
-        _options$loadOnlyOnce === void 0 ? false : _options$loadOnlyOnce,
+      loadOnlyOnce = _options$loadOnlyOnce === void 0 ? false : _options$loadOnlyOnce,
       _options$log = options.log,
       log = _options$log === void 0 ? function() {} : _options$log,
-      _options$onAuthentica = options.onAuthenticationError,
-      onAuthenticationError =
-        _options$onAuthentica === void 0
-          ? function() {}
-          : _options$onAuthentica,
+      onAuthenticationError = options.onAuthenticationError,
       _options$onCreate = options.onCreate,
-      onCreate =
-        _options$onCreate === void 0 ? function() {} : _options$onCreate,
+      onCreate = _options$onCreate === void 0 ? function() {} : _options$onCreate,
       _options$onError = options.onError,
       onError = _options$onError === void 0 ? console.error : _options$onError,
       _options$onLoad = options.onLoad,
       onLoad = _options$onLoad === void 0 ? function() {} : _options$onLoad,
       _options$onRemove = options.onRemove,
-      onRemove =
-        _options$onRemove === void 0 ? function() {} : _options$onRemove,
+      onRemove = _options$onRemove === void 0 ? function() {} : _options$onRemove,
       _options$onReplace = options.onReplace,
-      onReplace =
-        _options$onReplace === void 0 ? function() {} : _options$onReplace,
+      onReplace = _options$onReplace === void 0 ? function() {} : _options$onReplace,
       _options$onUpdate = options.onUpdate,
-      onUpdate =
-        _options$onUpdate === void 0 ? function() {} : _options$onUpdate,
+      onUpdate = _options$onUpdate === void 0 ? function() {} : _options$onUpdate,
       _options$mergeOnCreat = options.mergeOnCreate,
-      mergeOnCreate =
-        _options$mergeOnCreat === void 0 ? true : _options$mergeOnCreat,
+      mergeOnCreate = _options$mergeOnCreat === void 0 ? true : _options$mergeOnCreat,
       _options$mergeOnUpdat = options.mergeOnUpdate,
-      mergeOnUpdate =
-        _options$mergeOnUpdat === void 0 ? true : _options$mergeOnUpdat,
+      mergeOnUpdate = _options$mergeOnUpdat === void 0 ? true : _options$mergeOnUpdat,
       mock = options.mock,
       _options$query = options.query,
       query = _options$query === void 0 ? {} : _options$query,
-      _options$transform = options.transform,
-      transform =
-        _options$transform === void 0
-          ? function(v) {
-              return v
-            }
-          : _options$transform,
-      _options$transformCol = options.transformCollection,
-      transformCollection =
-        _options$transformCol === void 0
-          ? function(v) {
-              return v
-            }
-          : _options$transformCol,
-      _options$transformIte = options.transformItem,
-      transformItem =
-        _options$transformIte === void 0
-          ? function(v) {
-              return v
-            }
-          : _options$transformIte
+      transform = options.transform,
+      transformCollection = options.transformCollection,
+      transformItem = options.transformItem
+    var isCollectionExplicitlySet = options.hasOwnProperty('isCollection')
+    var isFixedEndpoint = isCollection === false
 
     if (axios !== _lib.fetchAxios) {
       log('using custom axios-fetch', axios)
       fetchStore.setAxios(axios)
     } // if isCollection not explicitly set, try to derive from arguments
 
-    if (!options.hasOwnProperty('isCollection')) {
+    if (!isCollectionExplicitlySet) {
       // for collections, clear id, and derive options from first param
       if (idExplicitlyPassed) {
         // e.g. useHook('foo') useHook(3)
         isCollection = false
+        isFixedEndpoint = true
       } else {
         isCollection = true
+      }
+    } else {
+      // isCollection explicitly set
+      if (isCollection === false && idExplicitlyPassed) {
+        var errorObj = new Error(
+          ''.concat(LOG_PREFIX, ' id should not be explicitly passed with option { isCollection: false }')
+        )
+        errorObj.isCollection = isCollection
+        errorObj.idExplicitlyPassed = idExplicitlyPassed
+        errorObj.args = args
+        onError(errorObj)
+        throw errorObj
       }
     } // allow { log: true } alias as well as routing to custom loggers
 
     log = log === true ? console.log : log // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
 
-    initialValue = options.hasOwnProperty('initialValue')
-      ? initialValue
-      : isCollection
-      ? []
-      : undefined
+    initialValue = options.hasOwnProperty('initialValue') ? initialValue : isCollection ? [] : undefined
     var queryKey =
       (0, _typeof2.default)(query) === 'object'
         ? Object.keys(query).length
@@ -241,13 +205,7 @@ var createRestHook = function createRestHook(endpoint) {
             dynamic: true,
           })
         : undefined
-    var key =
-      'resthook:' +
-      getEndpoint(
-        endpoint,
-        (!isCollection && (id || ':id')) || undefined,
-        queryKey
-      )
+    var key = 'resthook:' + getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
 
     var _useStore = (0, _useStoreHook.useStore)(key, initialValue, options),
       _useStore2 = (0, _slicedToArray2.default)(_useStore, 2),
@@ -276,8 +234,7 @@ var createRestHook = function createRestHook(endpoint) {
     })
 
     var handleError = function handleError() {
-      var error =
-        arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
+      var error = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
 
       if ((0, _typeof2.default)(error) === 'object') {
         var message = error.message,
@@ -292,53 +249,46 @@ var createRestHook = function createRestHook(endpoint) {
         }
       }
 
-      var errorObj = {
-        message: message,
-        status: status,
-        trace: error,
-      }
-      log('handleError executed', errorObj)
+      var errorObj = new Error(message)
+      errorObj.status = status
+      errorObj.trace = error // const errorObj = new ErrorObj({ message, status, trace: error })
+
+      log(''.concat(LOG_PREFIX, ' handleError executed'), errorObj)
       isMounted &&
         logAndSetMeta(
           _objectSpread({}, meta, {
             isLoading: false,
             error: errorObj,
           })
-        )
-      onError() // event
-      // handle authentication errors
+        ) // handle authentication errors
 
-      if (onAuthenticationError && [401, 403].includes(status)) {
+      if (typeof onAuthenticationError === 'function' && [401, 403].includes(status)) {
         onAuthenticationError(errorObj)
+      } else {
+        onError(errorObj)
       }
     }
 
     var createActionType = function createActionType() {
-      var actionOptions =
-        arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
+      var actionOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
       return function(item, oldItem) {
-        var itemId = id || getId(item)
+        var itemId = id || (isFixedEndpoint ? undefined : getId(item))
         var _actionOptions$action = actionOptions.actionType,
-          actionType =
-            _actionOptions$action === void 0 ? 'update' : _actionOptions$action,
+          actionType = _actionOptions$action === void 0 ? 'update' : _actionOptions$action,
           _actionOptions$method = actionOptions.method,
-          method =
-            _actionOptions$method === void 0 ? 'patch' : _actionOptions$method
+          method = _actionOptions$method === void 0 ? 'patch' : _actionOptions$method
         var payload = undefined
         log(actionType.toUpperCase(), 'on', item, 'with id', itemId)
 
-        if (!itemId && actionType !== 'create') {
-          return (0, _lib.autoReject)(
-            'Could not '.concat(actionType, ' item (see log)'),
-            {
-              fn: function fn() {
-                console.error(
-                  'option.getId(item) did not return a valid ID',
-                  item
-                )
-              },
-            }
-          )
+        if (!isFixedEndpoint && !itemId && actionType !== 'create') {
+          return (0, _lib.autoReject)('Could not '.concat(actionType, ' item (see log)'), {
+            fn: function fn() {
+              onError({
+                message: ''.concat(LOG_PREFIX, ' option.getId(item) did not return a valid ID'),
+                item: item,
+              })
+            },
+          })
         }
 
         if (['update', 'replace'].includes(actionType)) {
@@ -366,29 +316,30 @@ var createRestHook = function createRestHook(endpoint) {
 
         var resolve = function resolve(response) {
           try {
-            var newData = transform(response.data)
-            log('AFTER transform:', newData) // if collection, transform as collection
+            var newData = response.data
 
-            newData = transformItem(newData)
-            log('AFTER transformItem:', newData) // short circuit for non-collection calls
+            if (transform) {
+              newData = transform(response.data)
+              log('AFTER transform:', newData)
+            } // these calls only are fired against non-collection endpoints
+
+            if (transformItem) {
+              newData = transformItem(newData)
+              log('AFTER transformItem:', newData)
+            } // short circuit for non-collection calls
 
             if (!isCollection) {
-              log(
-                'non-collection action '.concat(
-                  actionType,
-                  ': setting data to'
-                ),
-                item
-              )
+              log('non-collection action '.concat(actionType, ': setting data to'), item)
 
               if (actionType === 'remove') {
+                onRemove(data)
                 return isMounted && setData()
               }
 
-              var updated = mergeOnUpdate
-                ? (0, _deepmerge.default)(item, newData)
-                : item
-              onUpdate(updated) // event
+              var updated = mergeOnUpdate ? (0, _deepmerge.default)(item, newData) : item
+              actionType === 'replace' && onReplace(updated) // event
+
+              actionType === 'update' && onUpdate(updated) // event
 
               isMounted && setData(updated)
               isMounted &&
@@ -403,9 +354,7 @@ var createRestHook = function createRestHook(endpoint) {
             }
 
             if (['update', 'replace'].includes(actionType)) {
-              item = mergeOnUpdate
-                ? (0, _deepmerge.default)(item, newData)
-                : item
+              item = mergeOnUpdate ? (0, _deepmerge.default)(item, newData) : item
               log('updating item in internal collection', item)
               newData = data.map(function(i) {
                 return getId(i) === itemId ? item : i
@@ -414,13 +363,9 @@ var createRestHook = function createRestHook(endpoint) {
 
               actionType === 'update' && onUpdate(item) // event
             } else if (actionType === 'create') {
-              item = mergeOnCreate
-                ? (0, _deepmerge.default)(item, newData)
-                : item
+              item = mergeOnCreate ? (0, _deepmerge.default)(item, newData) : item
               log('adding item to internal collection', item)
-              newData = [].concat((0, _toConsumableArray2.default)(data), [
-                item,
-              ])
+              newData = [].concat((0, _toConsumableArray2.default)(data), [item])
               onCreate(item) // event
             } else if (actionType === 'remove') {
               log('deleting item from internal collection')
@@ -443,11 +388,7 @@ var createRestHook = function createRestHook(endpoint) {
           }
         }
 
-        log(
-          'calling "'.concat(method, '" to'),
-          getEndpoint(endpoint, itemId),
-          payload
-        ) // mock exit for success
+        log('calling "'.concat(method, '" to'), getEndpoint(endpoint, itemId), payload) // mock exit for success
 
         if (mock) {
           return (0, _lib.autoResolve)('Success!', {
@@ -479,8 +420,7 @@ var createRestHook = function createRestHook(endpoint) {
     }) // data load function
 
     var load = function load() {
-      var loadOptions =
-        arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
+      var loadOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
       var opt = (0, _deepmerge.default)(options, loadOptions)
       var query = opt.query,
         loadOnlyOnce = opt.loadOnlyOnce
@@ -507,27 +447,30 @@ var createRestHook = function createRestHook(endpoint) {
 
           try {
             if ((0, _typeof2.default)(data) !== 'object') {
-              return onError(
-                'ERROR: Response not in object form... response.data =',
-                data
-              )
+              return onError('ERROR: Response not in object form... response.data =', data)
             }
 
             log('GET RESPONSE:', data) // all data gets base transform
 
-            data = transform(data)
-            log('AFTER transform:', data) // if collection, transform as collection
+            if (transform) {
+              data = transform(data)
+              log('AFTER transform:', data)
+            } // if collection, transform as collection
 
-            data = isCollection
-              ? transformCollection(data)
-              : transformItem(data)
-            log(
-              'AFTER transform'.concat(
-                isCollection ? 'Collection' : 'Item',
-                ':'
-              ),
-              data
-            )
+            if (isCollection && transformCollection) {
+              data = transformCollection(data)
+              log('AFTER transformCollection:', data)
+            }
+
+            if (transformItem) {
+              if (isCollection && data && data.length) {
+                data = data.map(transformItem)
+              } else {
+                data = transformItem(data)
+              }
+
+              log('AFTER transformItem:', data)
+            }
 
             if (isMounted) {
               setData(data)
@@ -601,7 +544,7 @@ var createRestHook = function createRestHook(endpoint) {
           }
 
           log('unmounting data hook')
-          isMounted = false
+          isMountedRef.current = false
         }
 
         if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
@@ -621,11 +564,12 @@ var createRestHook = function createRestHook(endpoint) {
       },
       [id]
     )
+    var loadFunction = eventable(load)
     return {
       data: data,
       filtered: meta.filtered,
-      load: eventable(load),
-      refresh: eventable(load),
+      load: loadFunction,
+      refresh: loadFunction,
       create: create,
       remove: remove,
       update: update,

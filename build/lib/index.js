@@ -56,11 +56,9 @@ var getPatch = function getPatch(newItem, oldItem) {
 exports.getPatch = getPatch
 
 var objectFilter = function objectFilter() {
-  var filter =
-    arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
+  var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
   return function() {
-    var obj =
-      arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
+    var obj = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
     return Object.keys(filter).reduce(function(out, key) {
       return out && filter[key] === obj[key]
     }, true)

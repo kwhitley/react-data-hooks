@@ -7,13 +7,9 @@ Object.defineProperty(exports, '__esModule', {
 })
 exports.FetchStore = void 0
 
-var _classCallCheck2 = _interopRequireDefault(
-  require('@babel/runtime/helpers/classCallCheck')
-)
+var _classCallCheck2 = _interopRequireDefault(require('@babel/runtime/helpers/classCallCheck'))
 
-var _defineProperty2 = _interopRequireDefault(
-  require('@babel/runtime/helpers/defineProperty')
-)
+var _defineProperty2 = _interopRequireDefault(require('@babel/runtime/helpers/defineProperty'))
 
 var _fetchAxios = require('./fetch-axios')
 
@@ -44,11 +40,7 @@ var FetchStore = function FetchStore() {
     }, _this.debounce)
   })
   ;(0, _defineProperty2.default)(this, 'get', function() {
-    for (
-      var _len = arguments.length, args = new Array(_len), _key = 0;
-      _key < _len;
-      _key++
-    ) {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key]
     }
 
