@@ -1,8 +1,8 @@
-import defaultAxios from 'axios'
+import { fetchAxios } from './fetch-axios'
 
 export class FetchStore {
   fetches = {}
-  fetcher = defaultAxios
+  fetcher = fetchAxios
   debounce = 100
 
   setAxios = axios => {

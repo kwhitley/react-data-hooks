@@ -1,14 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useStore } from 'use-store-hook'
-import defaultAxios from 'axios'
 import deepmerge from 'deepmerge'
-import {
-  objectFilter,
-  autoResolve,
-  autoReject,
-  getPatch,
-  FetchStore,
-} from './utils'
+import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
+
+const LOG_PREFIX = '[react-use-rest]:'
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
@@ -32,11 +27,10 @@ const createLogAndSetMeta = ({ log, setMeta }) => newMeta => {
   setMeta(newMeta)
 }
 
-export const createRestHook = (endpoint, createHookOptions = {}) => (
-  ...args
-) => {
+export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
   let [id, hookOptions] = args
-  let isMounted = true
+  let isMountedRef = useRef(true)
+  let isMounted = isMountedRef.current
   let idExplicitlyPassed = args.length && typeof args[0] !== 'object'
 
   if (typeof id === 'object' && hookOptions === undefined) {
@@ -51,7 +45,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   // extract options
   let {
     autoload = true,
-    axios = defaultAxios,
+    axios = fetchAxios,
     filter,
     getId = item => item.id, // handles the use-case of non-collections (will use id if present)
     initialValue,
@@ -59,7 +53,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     isCollection,
     loadOnlyOnce = false,
     log = () => {},
-    onAuthenticationError = () => {},
+    onAuthenticationError,
     onCreate = () => {},
     onError = console.error,
     onLoad = () => {},
@@ -70,19 +64,39 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     mergeOnUpdate = true,
     mock,
     query = {},
-    transform = v => v,
-    transformCollection = v => v,
-    transformItem = v => v,
+    transform,
+    transformCollection,
+    transformItem,
   } = options
 
+  let isCollectionExplicitlySet = options.hasOwnProperty('isCollection')
+  let isFixedEndpoint = isCollection === false
+
+  if (axios !== fetchAxios) {
+    log('using custom axios-fetch', axios)
+    fetchStore.setAxios(axios)
+  }
+
   // if isCollection not explicitly set, try to derive from arguments
-  if (!options.hasOwnProperty('isCollection')) {
+  if (!isCollectionExplicitlySet) {
     // for collections, clear id, and derive options from first param
     if (idExplicitlyPassed) {
       // e.g. useHook('foo') useHook(3)
       isCollection = false
+      isFixedEndpoint = true
     } else {
       isCollection = true
+    }
+  } else {
+    // isCollection explicitly set
+    if (isCollection === false && idExplicitlyPassed) {
+      let errorObj = new Error(`${LOG_PREFIX} id should not be explicitly passed with option { isCollection: false }`)
+      errorObj.isCollection = isCollection
+      errorObj.idExplicitlyPassed = idExplicitlyPassed
+      errorObj.args = args
+
+      onError(errorObj)
+      throw errorObj
     }
   }
 
@@ -90,11 +104,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
   log = log === true ? console.log : log
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
-  initialValue = options.hasOwnProperty('initialValue')
-    ? initialValue
-    : isCollection
-    ? []
-    : undefined
+  initialValue = options.hasOwnProperty('initialValue') ? initialValue : isCollection ? [] : undefined
 
   let queryKey =
     typeof query === 'object'
@@ -105,13 +115,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       ? JSON.stringify({ dynamic: true })
       : undefined
 
-  let key =
-    'resthook:' +
-    getEndpoint(
-      endpoint,
-      (!isCollection && (id || ':id')) || undefined,
-      queryKey
-    )
+  let key = 'resthook:' + getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
 
   let [data, setData] = useStore(key, initialValue, options)
   let [loadedOnce, setLoadedOnce] = useStore(key + ':loaded.once', false)
@@ -132,35 +136,45 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       if (error.response) {
         status = error.response.status
         message = error.response.data
+      } else if (!status && Number(message)) {
+        status = Number(message)
+        message = undefined
       }
     }
 
-    log('handleError executed', error)
+    const errorObj = new Error(message)
+    errorObj.status = status
+    errorObj.trace = error
+    // const errorObj = new ErrorObj({ message, status, trace: error })
+
+    log(`${LOG_PREFIX} handleError executed`, errorObj)
 
     isMounted &&
       logAndSetMeta({
         ...meta,
         isLoading: false,
-        error: message || error,
+        error: errorObj,
       })
-    onError(message || error) // event
 
     // handle authentication errors
-    if (onAuthenticationError && [401, 403].includes(status)) {
-      onAuthenticationError(error)
+    if (typeof onAuthenticationError === 'function' && [401, 403].includes(status)) {
+      onAuthenticationError(errorObj)
+    } else {
+      onError(errorObj)
     }
   }
 
   const createActionType = (actionOptions = {}) => (item, oldItem) => {
-    let itemId = id || getId(item)
+    let itemId = id || (isFixedEndpoint ? undefined : getId(item))
     let { actionType = 'update', method = 'patch' } = actionOptions
     let payload = undefined
 
     log(actionType.toUpperCase(), 'on', item, 'with id', itemId)
-    if (!itemId && actionType !== 'create') {
+
+    if (!isFixedEndpoint && !itemId && actionType !== 'create') {
       return autoReject(`Could not ${actionType} item (see log)`, {
         fn: () => {
-          console.error('option.getId(item) did not return a valid ID', item)
+          onError({ message: `${LOG_PREFIX} option.getId(item) did not return a valid ID`, item })
         },
       })
     }
@@ -189,23 +203,31 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
     const resolve = response => {
       try {
-        let newData = transform(response.data)
-        log('AFTER transform:', newData)
+        let newData = response.data
 
-        // if collection, transform as collection
-        newData = transformItem(newData)
-        log('AFTER transformItem:', newData)
+        if (transform) {
+          newData = transform(response.data)
+          log('AFTER transform:', newData)
+        }
+
+        // these calls only are fired against non-collection endpoints
+        if (transformItem) {
+          newData = transformItem(newData)
+          log('AFTER transformItem:', newData)
+        }
 
         // short circuit for non-collection calls
         if (!isCollection) {
           log(`non-collection action ${actionType}: setting data to`, item)
           if (actionType === 'remove') {
+            onRemove(data)
             return isMounted && setData()
           }
 
           let updated = mergeOnUpdate ? deepmerge(item, newData) : item
 
-          onUpdate(updated) // event
+          actionType === 'replace' && onReplace(updated) // event
+          actionType === 'update' && onUpdate(updated) // event
 
           isMounted && setData(updated)
 
@@ -244,18 +266,16 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
         // update internal data
         isMounted && setData(newData)
+        isMounted &&
+          logAndSetMeta({
+            ...meta,
+            isLoading: false,
+            key: getHash(),
+          })
       } catch (err) {
-        onError(err)
-        isMounted && setError(err.message)
+        handleError(err)
       }
     }
-
-    isMounted &&
-      logAndSetMeta({
-        ...meta,
-        isLoading: false,
-        key: getHash(),
-      })
 
     log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)
 
@@ -266,7 +286,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
     return axios[method](getEndpoint(endpoint, itemId), payload)
       .then(resolve)
-      .catch(err => handleError(err.response))
+      .catch(handleError)
   }
 
   const update = createActionType({ actionType: 'update', method: 'patch' })
@@ -293,26 +313,36 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
       })
 
     fetchStore
-      .setAxios(axios)
       .get(fetchEndpoint, { params: query })
       .then(({ data }) => {
         try {
           if (typeof data !== 'object') {
-            return onError(
-              'ERROR: Response not in object form... response.data =',
-              data
-            )
+            return onError('ERROR: Response not in object form... response.data =', data)
           }
 
           log('GET RESPONSE:', data)
 
           // all data gets base transform
-          data = transform(data)
-          log('AFTER transform:', data)
+
+          if (transform) {
+            data = transform(data)
+            log('AFTER transform:', data)
+          }
 
           // if collection, transform as collection
-          data = isCollection ? transformCollection(data) : transformItem(data)
-          log(`AFTER transform${isCollection ? 'Collection' : 'Item'}:`, data)
+          if (isCollection && transformCollection) {
+            data = transformCollection(data)
+            log('AFTER transformCollection:', data)
+          }
+
+          if (transformItem) {
+            if (isCollection && data && data.length) {
+              data = data.map(transformItem)
+            } else {
+              data = transformItem(data)
+            }
+            log('AFTER transformItem:', data)
+          }
 
           if (isMounted) {
             setData(data)
@@ -321,6 +351,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
             logAndSetMeta({
               ...meta,
+              filtered: data, // set filtered to loaded data... useEffect will trigger re-render with filtered data
               isLoading: false,
               error: undefined,
               key: getHash(),
@@ -331,9 +362,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
           handleError(err)
         }
       })
-      .catch(err => {
-        handleError(err.response || err)
-      })
+      .catch(handleError)
   }
 
   // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES
@@ -383,7 +412,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
 
       log('unmounting data hook')
 
-      isMounted = false
+      isMountedRef.current = false
     }
 
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
@@ -402,11 +431,13 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (
     return exit
   }, [id])
 
+  let loadFunction = eventable(load)
+
   return {
     data,
     filtered: meta.filtered,
-    load: eventable(load),
-    refresh: eventable(load),
+    load: loadFunction,
+    refresh: loadFunction,
     create,
     remove,
     update,

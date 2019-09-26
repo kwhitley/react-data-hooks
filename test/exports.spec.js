@@ -1,5 +1,5 @@
 import { renderHook, cleanup, act, unmount } from '@testing-library/react-hooks'
-import { createRestHook } from '../build'
+import { createRestHook } from '../src'
 
 describe('react-use-rest', () => {
   describe('EXPORTS', () => {
@@ -14,11 +14,11 @@ describe('react-use-rest', () => {
     const { result } = renderHook(() => useData({ autoload: false }))
 
     const attributes = [
-      { name: 'data', type: 'object' },
-      { name: 'filtered', type: 'object' },
+      { name: 'data', type: 'object', defaults: [] },
+      { name: 'filtered', type: 'object', defaults: [] },
       { name: 'key', type: 'object' },
       { name: 'isLoading', type: 'boolean' },
-      { name: 'error', type: 'undefined' },
+      { name: 'error', type: 'undefined', defaults: undefined },
       { name: 'load', type: 'function' },
       { name: 'refresh', type: 'function' },
       { name: 'create', type: 'function' },
@@ -30,9 +30,15 @@ describe('react-use-rest', () => {
     let hook = result.current
 
     for (let attribute of attributes) {
-      test(`returns ${attribute.name} property (${attribute.type})`, () => {
-        expect(hook.hasOwnProperty(attribute.name)).toBe(true)
-        expect(typeof hook[attribute.name]).toBe(attribute.type)
+      let { type, name, defaults } = attribute
+      let hasDefaults = attribute.hasOwnProperty('defaults')
+
+      test(`returns ${name} property (${type}) ${hasDefaults ? 'with default value = ' + defaults : ''}`, () => {
+        expect(hook.hasOwnProperty(name)).toBe(true)
+        expect(typeof hook[name]).toBe(type)
+        if (defaults) {
+          expect(hook[name]).toEqual(defaults)
+        }
       })
     }
   })

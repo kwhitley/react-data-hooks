@@ -7,31 +7,27 @@ Object.defineProperty(exports, '__esModule', {
 })
 exports.FetchStore = void 0
 
-var _classCallCheck2 = _interopRequireDefault(
-  require('@babel/runtime/helpers/classCallCheck')
-)
+var _classCallCheck2 = _interopRequireDefault(require('@babel/runtime/helpers/classCallCheck'))
 
-var _defineProperty2 = _interopRequireDefault(
-  require('@babel/runtime/helpers/defineProperty')
-)
+var _defineProperty2 = _interopRequireDefault(require('@babel/runtime/helpers/defineProperty'))
 
-var _axios = _interopRequireDefault(require('axios'))
+var _fetchAxios = require('./fetch-axios')
 
 var FetchStore = function FetchStore() {
   var _this = this
 
-  ;(0, _classCallCheck2['default'])(this, FetchStore)
-  ;(0, _defineProperty2['default'])(this, 'fetches', {})
-  ;(0, _defineProperty2['default'])(this, 'fetcher', _axios['default'])
-  ;(0, _defineProperty2['default'])(this, 'debounce', 100)
-  ;(0, _defineProperty2['default'])(this, 'setAxios', function(axios) {
+  ;(0, _classCallCheck2.default)(this, FetchStore)
+  ;(0, _defineProperty2.default)(this, 'fetches', {})
+  ;(0, _defineProperty2.default)(this, 'fetcher', _fetchAxios.fetchAxios)
+  ;(0, _defineProperty2.default)(this, 'debounce', 100)
+  ;(0, _defineProperty2.default)(this, 'setAxios', function(axios) {
     _this.fetcher = axios
     return _this
   })
-  ;(0, _defineProperty2['default'])(this, 'setDebounce', function(value) {
+  ;(0, _defineProperty2.default)(this, 'setDebounce', function(value) {
     _this.debounce = value
   })
-  ;(0, _defineProperty2['default'])(this, 'setExpiration', function(key) {
+  ;(0, _defineProperty2.default)(this, 'setExpiration', function(key) {
     var fetchEntry = _this.fetches[key] || {}
     var expires = fetchEntry.expires
 
@@ -43,12 +39,8 @@ var FetchStore = function FetchStore() {
       return _this.expireFetch(key)
     }, _this.debounce)
   })
-  ;(0, _defineProperty2['default'])(this, 'get', function() {
-    for (
-      var _len = arguments.length, args = new Array(_len), _key = 0;
-      _key < _len;
-      _key++
-    ) {
+  ;(0, _defineProperty2.default)(this, 'get', function() {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key]
     }
 
@@ -71,7 +63,7 @@ var FetchStore = function FetchStore() {
 
     return fetchEntry.fetch
   })
-  ;(0, _defineProperty2['default'])(this, 'expireFetch', function(key) {
+  ;(0, _defineProperty2.default)(this, 'expireFetch', function(key) {
     delete _this.fetches[key]
   })
 }
