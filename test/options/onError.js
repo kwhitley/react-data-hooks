@@ -85,4 +85,36 @@ export const onError = () =>
       expect(onError).toHaveBeenCalledTimes(2)
       expect(onUpdate).not.toHaveBeenCalled()
     })
+
+    it('returned payload from errored response is delivered to onError', async () => {
+      const { useCollection, endpoint } = setup()
+      fetchMock.getOnce(
+        endpoint,
+        {
+          status: 409,
+          body: { detail: 'try again' },
+        },
+        { overwriteRoutes: true }
+      )
+      const onError = jest.fn(err => Object.assign({}, err))
+      const { hook, compare, pause } = extractHook(() => useCollection({ onError }))
+      await pause()
+      expect(onError).toHaveReturnedWith({ status: 409, msg: 'Conflict', detail: 'try again' })
+    })
+
+    it('honors error.message default', async () => {
+      const { useCollection, endpoint } = setup()
+      fetchMock.getOnce(
+        endpoint,
+        {
+          status: 409,
+          body: { detail: 'try again' },
+        },
+        { overwriteRoutes: true }
+      )
+      const onError = jest.fn(err => err.message)
+      const { hook, compare, pause } = extractHook(() => useCollection({ onError }))
+      await pause()
+      expect(onError).toHaveReturnedWith('Conflict')
+    })
   })

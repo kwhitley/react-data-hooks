@@ -1,20 +1,28 @@
 const getBody = r => {
-  const isJSON =
-    (r.headers.get('content-type') || '').indexOf('application/json') !== -1
+  const isJSON = (r.headers.get('content-type') || '').indexOf('application/json') !== -1
 
   if (isJSON) {
     return r.json()
   }
 
-  return r.body || r
+  return r.body
 }
 
 const emulateAxiosResponse = data => ({ data })
 
 const catchErrors = response => {
   if (response.status >= 400) {
-    const errorResponse = new Error(response.body || response.statusText)
+    const isJSON = (response.headers.get('content-type') || '').indexOf('application/json') !== -1
+
+    var body = !isJSON
+      ? response.body
+      : { message: response.statusText, status: response.status, ...JSON.parse(response.body) }
+    const errorResponse = new Error(response.statusText)
     errorResponse.status = Number(response.status)
+    errorResponse.msg = response.statusText
+    if (typeof body === 'object') {
+      Object.keys(body || {}).forEach(key => (errorResponse[key] = body[key]))
+    }
 
     throw errorResponse
   }
@@ -30,10 +38,7 @@ const createFetchCall = (method = 'GET') => (url, data) => {
     if (method === 'GET') {
       let { params = {} } = data || {}
       let query = Object.keys(params)
-        .map(
-          param =>
-            `${encodeURIComponent(param)}=${encodeURIComponent(params[param])}`
-        )
+        .map(param => `${encodeURIComponent(param)}=${encodeURIComponent(params[param])}`)
         .join('&')
 
       if (query.length) {

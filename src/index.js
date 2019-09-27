@@ -131,21 +131,24 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   const handleError = (error = {}) => {
     if (typeof error === 'object') {
-      var { message, status } = error
+      var { msg, status } = error
+      var body
 
       if (error.response) {
         status = error.response.status
-        message = error.response.data
-      } else if (!status && Number(message)) {
-        status = Number(message)
-        message = undefined
+        msg = error.response.data
+        body = error.response
+      } else if (!status && Number(msg)) {
+        status = Number(msg)
+        msg = undefined
+        body = error
       }
     }
 
-    const errorObj = new Error(message)
+    const errorObj = new Error(msg)
     errorObj.status = status
-    errorObj.trace = error
-    // const errorObj = new ErrorObj({ message, status, trace: error })
+    errorObj.msg = msg
+    Object.keys(error || {}).forEach(key => (errorObj[key] = error[key]))
 
     log(`${LOG_PREFIX} handleError executed`, errorObj)
 
