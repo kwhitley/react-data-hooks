@@ -237,22 +237,27 @@ var createRestHook = function createRestHook(endpoint) {
       var error = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
 
       if ((0, _typeof2.default)(error) === 'object') {
-        var message = error.message,
+        var msg = error.msg,
           status = error.status
+        var body
 
         if (error.response) {
           status = error.response.status
-          message = error.response.data
-        } else if (!status && Number(message)) {
-          status = Number(message)
-          message = undefined
+          msg = error.response.data
+          body = error.response
+        } else if (!status && Number(msg)) {
+          status = Number(msg)
+          msg = undefined
+          body = error
         }
       }
 
-      var errorObj = new Error(message)
+      var errorObj = new Error(msg)
       errorObj.status = status
-      errorObj.trace = error // const errorObj = new ErrorObj({ message, status, trace: error })
-
+      errorObj.msg = msg
+      Object.keys(error || {}).forEach(function(key) {
+        return (errorObj[key] = error[key])
+      })
       log(''.concat(LOG_PREFIX, ' handleError executed'), errorObj)
       isMounted &&
         logAndSetMeta(
