@@ -76,7 +76,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   log = log === true ? console.log : log
 
   if (axios !== fetchAxios) {
-    log('using custom axios-fetch', axios)
+    // log('using custom axios-fetch', axios)
     fetchStore.setAxios(axios)
   }
 
@@ -130,25 +130,22 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   const logAndSetMeta = createLogAndSetMeta({ log, setMeta })
 
   const handleError = (error = {}) => {
-    if (typeof error === 'object') {
-      var { msg, status } = error
-      var body
+    var errorObj
 
-      if (error.response) {
-        status = error.response.status
-        msg = error.response.data
-        body = error.response
-      } else if (!status && Number(msg)) {
+    if (typeof error === 'object') {
+      var { msg, data, body, status, statusText } = error
+
+      if (!status && Number(msg)) {
         status = Number(msg)
         msg = undefined
-        body = error
       }
-    }
 
-    const errorObj = new Error(msg)
-    errorObj.status = status
-    errorObj.msg = msg
-    Object.keys(error || {}).forEach(key => (errorObj[key] = error[key]))
+      errorObj = new Error(msg || statusText)
+      let errorAttrSrc = data || body || error // matches fetch & axios response if given
+      Object.keys(errorAttrSrc).forEach(key => (errorObj[key] = errorAttrSrc[key]))
+    } else {
+      errorObj = new Error(error)
+    }
 
     log(`${LOG_PREFIX} handleError executed`, errorObj)
 
@@ -289,7 +286,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     return axios[method](getEndpoint(endpoint, itemId), payload)
       .then(resolve)
-      .catch(handleError)
+      .catch(err => handleError(err.response || err))
   }
 
   const update = createActionType({ actionType: 'update', method: 'patch' })
@@ -365,7 +362,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           handleError(err)
         }
       })
-      .catch(handleError)
+      .catch(err => handleError(err.response || err))
   }
 
   // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES

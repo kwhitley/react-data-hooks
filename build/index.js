@@ -167,7 +167,7 @@ var createRestHook = function createRestHook(endpoint) {
     log = log === true ? console.log : log
 
     if (axios !== _lib.fetchAxios) {
-      log('using custom axios-fetch', axios)
+      // log('using custom axios-fetch', axios)
       fetchStore.setAxios(axios)
     } // if isCollection not explicitly set, try to derive from arguments
 
@@ -235,29 +235,30 @@ var createRestHook = function createRestHook(endpoint) {
 
     var handleError = function handleError() {
       var error = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
+      var errorObj
 
       if ((0, _typeof2.default)(error) === 'object') {
         var msg = error.msg,
-          status = error.status
-        var body
+          data = error.data,
+          body = error.body,
+          status = error.status,
+          statusText = error.statusText
 
-        if (error.response) {
-          status = error.response.status
-          msg = error.response.data
-          body = error.response
-        } else if (!status && Number(msg)) {
+        if (!status && Number(msg)) {
           status = Number(msg)
           msg = undefined
-          body = error
         }
+
+        errorObj = new Error(msg || statusText)
+        var errorAttrSrc = data || body || error // matches fetch & axios response if given
+
+        Object.keys(errorAttrSrc).forEach(function(key) {
+          return (errorObj[key] = errorAttrSrc[key])
+        })
+      } else {
+        errorObj = new Error(error)
       }
 
-      var errorObj = new Error(msg)
-      errorObj.status = status
-      errorObj.msg = msg
-      Object.keys(error || {}).forEach(function(key) {
-        return (errorObj[key] = error[key])
-      })
       log(''.concat(LOG_PREFIX, ' handleError executed'), errorObj)
       isMounted &&
         logAndSetMeta(
@@ -403,7 +404,9 @@ var createRestHook = function createRestHook(endpoint) {
 
         return axios[method](getEndpoint(endpoint, itemId), payload)
           .then(resolve)
-          .catch(handleError)
+          .catch(function(err) {
+            return handleError(err.response || err)
+          })
       }
     }
 
@@ -495,7 +498,9 @@ var createRestHook = function createRestHook(endpoint) {
             handleError(err)
           }
         })
-        .catch(handleError)
+        .catch(function(err) {
+          return handleError(err.response || err)
+        })
     } // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES
 
     ;(0, _react.useEffect)(
