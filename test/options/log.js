@@ -23,6 +23,16 @@ export const log = () =>
       window.console.log = originalLog
     })
 
+    it('uses console.log if { log: true }', async () => {
+      const { useCollection } = setup()
+      let originalLog = window.console.log
+      let log = (window.console.log = jest.fn())
+      const { hook, compare, pause } = extractHook(() => useCollection({ log: true }))
+      await pause()
+      expect(log).toHaveBeenCalled()
+      window.console.log = originalLog
+    })
+
     it('can accept any function to handle log (e.g. { log: console.info })', async () => {
       const { useCollection } = setup()
       const log = jest.fn()

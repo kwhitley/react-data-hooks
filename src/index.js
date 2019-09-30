@@ -72,6 +72,9 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   let isCollectionExplicitlySet = options.hasOwnProperty('isCollection')
   let isFixedEndpoint = isCollection === false
 
+  // allow { log: true } alias as well as routing to custom loggers
+  log = log === true ? console.log : log
+
   if (axios !== fetchAxios) {
     log('using custom axios-fetch', axios)
     fetchStore.setAxios(axios)
@@ -99,9 +102,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       throw errorObj
     }
   }
-
-  // allow { log: true } alias as well as routing to custom loggers
-  log = log === true ? console.log : log
 
   // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
   initialValue = options.hasOwnProperty('initialValue') ? initialValue : isCollection ? [] : undefined

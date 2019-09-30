@@ -162,7 +162,9 @@ var createRestHook = function createRestHook(endpoint) {
       transformCollection = options.transformCollection,
       transformItem = options.transformItem
     var isCollectionExplicitlySet = options.hasOwnProperty('isCollection')
-    var isFixedEndpoint = isCollection === false
+    var isFixedEndpoint = isCollection === false // allow { log: true } alias as well as routing to custom loggers
+
+    log = log === true ? console.log : log
 
     if (axios !== _lib.fetchAxios) {
       log('using custom axios-fetch', axios)
@@ -190,9 +192,7 @@ var createRestHook = function createRestHook(endpoint) {
         onError(errorObj)
         throw errorObj
       }
-    } // allow { log: true } alias as well as routing to custom loggers
-
-    log = log === true ? console.log : log // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
+    } // initialValue defines the initial state of the data response ([] for collection queries, or undefined for item lookups)
 
     initialValue = options.hasOwnProperty('initialValue') ? initialValue : isCollection ? [] : undefined
     var queryKey =
