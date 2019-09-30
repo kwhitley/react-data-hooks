@@ -13,15 +13,11 @@ const emulateAxiosResponse = data => ({ data })
 const catchErrors = response => {
   if (response.status >= 400) {
     const isJSON = (response.headers.get('content-type') || '').indexOf('application/json') !== -1
-
-    var body = !isJSON
-      ? response.body
-      : { message: response.statusText, status: response.status, ...JSON.parse(response.body) }
     const errorResponse = new Error(response.statusText)
     errorResponse.status = Number(response.status)
     errorResponse.msg = response.statusText
-    if (typeof body === 'object') {
-      Object.keys(body || {}).forEach(key => (errorResponse[key] = body[key]))
+    if (isJSON) {
+      errorResponse.body = JSON.parse(response.body)
     }
 
     throw errorResponse

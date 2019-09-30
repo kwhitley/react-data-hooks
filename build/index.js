@@ -239,27 +239,32 @@ var createRestHook = function createRestHook(endpoint) {
 
       if ((0, _typeof2.default)(error) === 'object') {
         var msg = error.msg,
+          message = error.message,
           data = error.data,
           body = error.body,
           status = error.status,
           statusText = error.statusText
+        var errorMessage = msg || message || statusText
+        var errorBody = data || body || {}
 
-        if (!status && Number(msg)) {
-          status = Number(msg)
-          msg = undefined
+        if (!status && Number(errorMessage)) {
+          status = Number(errorMessage)
+          errorMessage = undefined
         }
 
-        errorObj = new Error(msg || statusText)
-        var errorAttrSrc = data || body || error // matches fetch & axios response if given
-
-        Object.keys(errorAttrSrc).forEach(function(key) {
-          return (errorObj[key] = errorAttrSrc[key])
+        errorObj = new Error(errorMessage)
+        errorObj.msg = errorMessage
+        errorObj.status = status
+        Object.keys(errorBody).forEach(function(key) {
+          return (errorObj[key] = errorBody[key])
         })
       } else {
         errorObj = new Error(error)
       }
 
-      log(''.concat(LOG_PREFIX, ' handleError executed'), errorObj)
+      log(''.concat(LOG_PREFIX, ' handleError executed'), {
+        errorObj: errorObj,
+      })
       isMounted &&
         logAndSetMeta(
           _objectSpread({}, meta, {

@@ -133,21 +133,25 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     var errorObj
 
     if (typeof error === 'object') {
-      var { msg, data, body, status, statusText } = error
+      var { msg, message, data, body, status, statusText } = error
 
-      if (!status && Number(msg)) {
-        status = Number(msg)
-        msg = undefined
+      var errorMessage = msg || message || statusText
+      var errorBody = data || body || {}
+
+      if (!status && Number(errorMessage)) {
+        status = Number(errorMessage)
+        errorMessage = undefined
       }
 
-      errorObj = new Error(msg || statusText)
-      let errorAttrSrc = data || body || error // matches fetch & axios response if given
-      Object.keys(errorAttrSrc).forEach(key => (errorObj[key] = errorAttrSrc[key]))
+      errorObj = new Error(errorMessage)
+      errorObj.msg = errorMessage
+      errorObj.status = status
+      Object.keys(errorBody).forEach(key => (errorObj[key] = errorBody[key]))
     } else {
       errorObj = new Error(error)
     }
 
-    log(`${LOG_PREFIX} handleError executed`, errorObj)
+    log(`${LOG_PREFIX} handleError executed`, { errorObj })
 
     isMounted &&
       logAndSetMeta({
