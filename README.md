@@ -5,7 +5,6 @@
 [![minified + gzipped size](https://badgen.net/bundlephobia/minzip/react-use-rest)](https://bundlephobia.com/result?p=react-use-rest)
 [![npm version](https://badge.fury.io/js/react-use-rest.svg)](https://www.npmjs.com/package/react-use-rest)
 [![Build Status via Travis CI](https://travis-ci.org/kwhitley/react-use-rest.svg?branch=master)](https://travis-ci.org/kwhitley/react-use-rest)
-[![gzip size](https://img.badgesize.io/https://unpkg.com/react-use-rest?compression=gzip&style=flat-square)](https://unpkg.com/react-use-rest)
 
 # Installation
 
@@ -251,5 +250,5 @@ export default function MyApp() {
 
 ## Changelog
 
-**v1.7.0** - added `fetchOptions` option (allows for custom headers to be passed with hook requests)
-**v1.6.0** - removed `deepmerge` dependency (previously used for options merging)
+- **v1.7.0** - added `fetchOptions` option (allows for custom headers to be passed with hook requests)
+- **v1.6.0** - removed `deepmerge` dependency (previously used for options merging)
