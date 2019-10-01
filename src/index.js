@@ -19,6 +19,7 @@ const eventable = fn => (...args) => {
   return fn(...args)
 }
 
+// instantiate shared fetch pool for GET requests
 const fetchStore = new FetchStore()
 
 const createLogAndSetMeta = ({ log, setMeta }) => newMeta => {
@@ -47,6 +48,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   let {
     autoload = true,
     axios = fetchAxios,
+    fetchOptions = {},
     filter,
     getId = item => item.id, // handles the use-case of non-collections (will use id if present)
     initialValue,
@@ -289,7 +291,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       return autoResolve('Success!', { fn: resolve })
     }
 
-    return axios[method](getEndpoint(endpoint, itemId), payload)
+    return axios[method](getEndpoint(endpoint, itemId), payload, fetchOptions)
       .then(resolve)
       .catch(err => handleError(err.response || err))
   }
@@ -318,7 +320,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       })
 
     fetchStore
-      .get(fetchEndpoint, { params: query })
+      .get(fetchEndpoint, { params: query }, fetchOptions)
       .then(({ data }) => {
         try {
           if (typeof data !== 'object') {

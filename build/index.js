@@ -82,7 +82,7 @@ var eventable = function eventable(fn) {
 
     return fn.apply(void 0, arguments)
   }
-}
+} // instantiate shared fetch pool for GET requests
 
 var fetchStore = new _lib.FetchStore()
 
@@ -123,6 +123,8 @@ var createRestHook = function createRestHook(endpoint) {
       autoload = _options$autoload === void 0 ? true : _options$autoload,
       _options$axios = options.axios,
       axios = _options$axios === void 0 ? _lib.fetchAxios : _options$axios,
+      _options$fetchOptions = options.fetchOptions,
+      fetchOptions = _options$fetchOptions === void 0 ? {} : _options$fetchOptions,
       filter = options.filter,
       _options$getId = options.getId,
       getId =
@@ -407,7 +409,7 @@ var createRestHook = function createRestHook(endpoint) {
           })
         }
 
-        return axios[method](getEndpoint(endpoint, itemId), payload)
+        return axios[method](getEndpoint(endpoint, itemId), payload, fetchOptions)
           .then(resolve)
           .catch(function(err) {
             return handleError(err.response || err)
@@ -454,9 +456,13 @@ var createRestHook = function createRestHook(endpoint) {
           })
         )
       fetchStore
-        .get(fetchEndpoint, {
-          params: query,
-        })
+        .get(
+          fetchEndpoint,
+          {
+            params: query,
+          },
+          fetchOptions
+        )
         .then(function(_ref2) {
           var data = _ref2.data
 

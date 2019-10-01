@@ -26,8 +26,12 @@ const catchErrors = response => {
   return response
 }
 
-const createFetchCall = (method = 'GET') => (url, data) => {
+const createFetchCall = (method = 'GET') => (url, data, fetchOptions = {}) => {
   let payload = {}
+
+  // if (Object.keys(fetchOptions).length) {
+  //   console.log('creating', method, 'call with fetchOptions', fetchOptions)
+  // }
 
   if (typeof data === 'object') {
     // parse query params
@@ -51,7 +55,9 @@ const createFetchCall = (method = 'GET') => (url, data) => {
     }
   }
 
-  return fetch(url, { method, ...payload })
+  // console.log({ method, ...payload, ...fetchOptions })
+
+  return fetch(url, { method, ...payload, ...fetchOptions })
     .then(catchErrors)
     .then(getBody)
     .then(emulateAxiosResponse)

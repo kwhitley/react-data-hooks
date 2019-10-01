@@ -19,6 +19,7 @@ describe('BEHAVIOR' + example1, () => {
 
   describe('OPTIONS', () => {
     options.autoload()
+    options.fetchOptions()
     options.filter()
     options.initialValue()
     options.interval()

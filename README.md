@@ -72,6 +72,7 @@ export default function MyApp() {
 | ------------------------- | :-------------------------------------------------------------------------------: | :-----------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **axios**                 |                                 `axios instance`                                  |       `axios`       | You can pass in a custom axios instance to use (for advanced usage with injected headers, etc)                                                                                                        |
 | **autoload**              |                                     `boolean`                                     |       `true`        | data will fire initial GET by default unless set to false                                                                                                                                             |
+| **fetchOptions**          |                                     `object`                                      |     `undefined`     | Options to be passed into fetch requests if using internal native fetch (e.g. { fetchOptions: { headers: { Authorization: 'foo' } } })                                                                |
 | **filter**                |                                    `function`                                     |     `undefined`     | filters data results into the "filtered" collection                                                                                                                                                   |
 | **getId**                 |                                    `function`                                     | `(item) => item.id` | how to derive item ID from a collection item (used for endpoint generation for PUT/PATCH/DELETE                                                                                                       |
 | **initialValue**          |                                `object` or `array`                                | `[]` or `undefined` | initial value of "data" return, [] if collection, undefined if ID endpoint                                                                                                                            |
@@ -247,3 +248,8 @@ export default function MyApp() {
   return <div>{isLoading ? 'loading kittens...' : `we found ${data.length} kittens!`}</div>
 }
 ```
+
+## Changelog
+
+**v1.7.0** - added `fetchOptions` option (allows for custom headers to be passed with hook requests)
+**v1.6.0** - removed `deepmerge` dependency (previously used for options merging)

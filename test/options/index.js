@@ -1,4 +1,5 @@
 export * from './autoload'
+export * from './fetchOptions'
 export * from './filter'
 export * from './initialValue'
 export * from './interval'
