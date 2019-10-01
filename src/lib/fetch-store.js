@@ -1,21 +1,23 @@
 import { fetchAxios } from './fetch-axios'
 
 export class FetchStore {
-  fetches = {}
-  fetcher = fetchAxios
-  debounce = 100
+  constructor() {
+    this.fetches = {}
+    this.fetcher = fetchAxios
+    this.debounce = 100
+  }
 
-  setAxios = axios => {
+  setAxios(axios) {
     this.fetcher = axios
 
     return this
   }
 
-  setDebounce = value => {
+  setDebounce(value) {
     this.debounce = value
   }
 
-  setExpiration = key => {
+  setExpiration(key) {
     let fetchEntry = this.fetches[key] || {}
     let { expires } = fetchEntry
 
@@ -26,7 +28,7 @@ export class FetchStore {
     fetchEntry.expires = setTimeout(() => this.expireFetch(key), this.debounce)
   }
 
-  get = (...args) => {
+  get(...args) {
     let key = JSON.stringify(args)
     let fetchEntry = this.fetches[key]
 
@@ -45,7 +47,7 @@ export class FetchStore {
     return fetchEntry.fetch
   }
 
-  expireFetch = key => {
+  expireFetch(key) {
     delete this.fetches[key]
   }
 }
