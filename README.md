@@ -2,7 +2,7 @@
 
 ## React.js data hooks for REST API endpoints
 
-[![minified + gzipped size](https://badgen.net/bundlephobia/minzip/react)](https://bundlephobia.com/result?p=react-use-rest)
+[![minified + gzipped size](https://badgen.net/bundlephobia/minzip/react-use-rest)](https://bundlephobia.com/result?p=react-use-rest)
 [![npm version](https://badge.fury.io/js/react-use-rest.svg)](https://www.npmjs.com/package/react-use-rest)
 [![Build Status via Travis CI](https://travis-ci.org/kwhitley/react-use-rest.svg?branch=master)](https://travis-ci.org/kwhitley/react-use-rest)
 [![gzip size](https://img.badgesize.io/https://unpkg.com/react-use-rest?compression=gzip&style=flat-square)](https://unpkg.com/react-use-rest)
