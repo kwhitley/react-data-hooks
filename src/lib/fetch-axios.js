@@ -33,6 +33,13 @@ const createFetchCall = (method = 'GET') => (url, data, fetchOptions = {}) => {
   //   console.log('creating', method, 'call with fetchOptions', fetchOptions)
   // }
 
+  let { headers = {}, ...otherFetchOptions } = fetchOptions
+  fetchOptions = otherFetchOptions
+  fetchOptions.headers = {
+    'Content-Type': 'application/json',
+    ...headers,
+  }
+
   if (typeof data === 'object') {
     // parse query params
     if (method === 'GET') {
@@ -48,14 +55,9 @@ const createFetchCall = (method = 'GET') => (url, data, fetchOptions = {}) => {
       // parse payloads for POST|PUT|PATCH
       payload = {
         body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
       }
     }
   }
-
-  // console.log({ method, ...payload, ...fetchOptions })
 
   return fetch(url, { method, ...payload, ...fetchOptions })
     .then(catchErrors)

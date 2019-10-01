@@ -250,6 +250,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.7.3** - fix: re-embeds default Content-Type: application/json header
 - **v1.7.1** - converted from babel to rollup + typescript to decrease module size
 - **v1.7.0** - added `fetchOptions` option (allows for custom headers to be passed with hook requests)
 - **v1.6.0** - removed `deepmerge` dependency (previously used for options merging)
