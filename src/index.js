@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useStore } from 'use-store-hook'
-import deepmerge from 'deepmerge'
 import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
 
 const LOG_PREFIX = '[react-use-rest]:'
@@ -39,8 +38,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     id = undefined
   }
 
+  hookOptions = hookOptions || {}
+
   // local options are a blend of factory options and instantiation options
-  let options = deepmerge(createHookOptions, hookOptions || {})
+  let options = { ...createHookOptions, ...hookOptions }
 
   // extract options
   let {
@@ -228,7 +229,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
             return isMounted && setData()
           }
 
-          let updated = mergeOnUpdate ? deepmerge(item, newData) : item
+          let updated = mergeOnUpdate ? { ...item, ...newData } : item
 
           actionType === 'replace' && onReplace(updated) // event
           actionType === 'update' && onUpdate(updated) // event
@@ -247,7 +248,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         }
 
         if (['update', 'replace'].includes(actionType)) {
-          item = mergeOnUpdate ? deepmerge(item, newData) : item
+          item = mergeOnUpdate ? { ...item, ...newData } : item
 
           log('updating item in internal collection', item)
           newData = data.map(i => (getId(i) === itemId ? item : i))
@@ -255,7 +256,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           actionType === 'replace' && onReplace(item) // event
           actionType === 'update' && onUpdate(item) // event
         } else if (actionType === 'create') {
-          item = mergeOnCreate ? deepmerge(item, newData) : item
+          item = mergeOnCreate ? { ...item, ...newData } : item
 
           log('adding item to internal collection', item)
           newData = [...data, item]
@@ -300,7 +301,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   // data load function
   const load = (loadOptions = {}) => {
-    let opt = deepmerge(options, loadOptions)
+    let opt = { ...options, ...loadOptions }
     let { query, loadOnlyOnce } = opt
     let fetchEndpoint = getEndpoint(endpoint, id)
 

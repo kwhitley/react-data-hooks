@@ -2,6 +2,7 @@
 
 ## React.js data hooks for REST API endpoints
 
+[![minified + gzipped size](https://badgen.net/bundlephobia/minzip/react)](https://bundlephobia.com/result?p=react-use-rest)
 [![npm version](https://badge.fury.io/js/react-use-rest.svg)](https://www.npmjs.com/package/react-use-rest)
 [![Build Status via Travis CI](https://travis-ci.org/kwhitley/react-use-rest.svg?branch=master)](https://travis-ci.org/kwhitley/react-use-rest)
 [![gzip size](https://img.badgesize.io/https://unpkg.com/react-use-rest?compression=gzip&style=flat-square)](https://unpkg.com/react-use-rest)
@@ -57,40 +58,39 @@ const useKittens = createRestHook('/api/kittens')
 export default function MyApp() {
   let { data: kittens, isLoading } = useKittens() // use it
 
-  return (
-    <div>
-      {isLoading ? 'loading kittens...' : `we found ${kittens.length} kittens!`}
-    </div>
-  )
+  return <div>{isLoading ? 'loading kittens...' : `we found ${kittens.length} kittens!`}</div>
 }
 ```
+
 [continue to other examples...](#example-2)
 
 # API
+
 ### Options
-Name | Type | Default | Description
---- | :---: | :---: | ---
-**axios** | `axios instance` | `axios` | You can pass in a custom axios instance to use (for advanced usage with injected headers, etc)
-**autoload** | `boolean` | `true` | data will fire initial GET by default unless set to false
-**filter** | `function` | `undefined` | filters data results into the "filtered" collection
-**getId** | `function` | `(item) => item.id` | how to derive item ID from a collection item (used for endpoint generation for PUT/PATCH/DELETE
-**initialValue** | `object` or `array` | `[]` or `undefined` | initial value of "data" return, [] if collection, undefined if ID endpoint
-**interval** | `number` | `undefined` | refresh collection every 5000ms (5s)
-**isCollection** | `boolean | `false` | set to false to allow direct REST against a specific endpoint
-**log** | `boolean` or `function` | `false` | if passed `true`, uses `console.log` for debug output, otherwise accepts any function
-**mergeOnCreate** | `boolean` | `true` | use response payload for newly created items
-**mergeOnUpdate** | `boolean | `true` | use response payload for newly updated items
-**mock** | `boolean` | `true` | simulate, but do not fire POST/PUT/PATCH/DELETE actions (for testing)
-**onAuthenticationError** | `function` | `undefined` | fired when calls return 401 or 403 (e.g. can redirect, etc)
-**onCreate** | `function` | `undefined` | fired when item is created successfully
-**onError** | `function` | `console.error` | fired on internal error, or response errors
-**onLoad** | `function` | `undefined` | fired when data is loaded successfully
-**onRemove** | `function` | `undefined` | fired when item is deleted successfully
-**onReplace** | `function` | `undefined` | fired when item is replaced successfully
-**onUpdate** | `function` | `undefined` | fired when item is updated successfully
-**persist** | `boolean` | `false` | will persist results to localStorage for fast delivery on page refresh
-**query** | `object` or `function` | `undefined` | can send fixed query params via object such as `{ isLive: true }` or via a dynamically executed query function (executed at time of load/interval), such as `() => ({ isLive: Math.random() > 0.5 })`
-**transform** | `function` | `undefined` | use to reshape your API payload (e.g. `(data) => data.data.slice(0,2)`
+
+| Name                      |                                       Type                                        |       Default       | Description                                                                                                                                                                                           |
+| ------------------------- | :-------------------------------------------------------------------------------: | :-----------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **axios**                 |                                 `axios instance`                                  |       `axios`       | You can pass in a custom axios instance to use (for advanced usage with injected headers, etc)                                                                                                        |
+| **autoload**              |                                     `boolean`                                     |       `true`        | data will fire initial GET by default unless set to false                                                                                                                                             |
+| **filter**                |                                    `function`                                     |     `undefined`     | filters data results into the "filtered" collection                                                                                                                                                   |
+| **getId**                 |                                    `function`                                     | `(item) => item.id` | how to derive item ID from a collection item (used for endpoint generation for PUT/PATCH/DELETE                                                                                                       |
+| **initialValue**          |                                `object` or `array`                                | `[]` or `undefined` | initial value of "data" return, [] if collection, undefined if ID endpoint                                                                                                                            |
+| **interval**              |                                     `number`                                      |     `undefined`     | refresh collection every 5000ms (5s)                                                                                                                                                                  |
+| **isCollection**          | `boolean |`false` | set to false to allow direct REST against a specific endpoint |
+| **log**                   |                              `boolean` or `function`                              |       `false`       | if passed `true`, uses `console.log` for debug output, otherwise accepts any function                                                                                                                 |
+| **mergeOnCreate**         |                                     `boolean`                                     |       `true`        | use response payload for newly created items                                                                                                                                                          |
+| **mergeOnUpdate**         |          `boolean |`true` | use response payload for newly updated items          |
+| **mock**                  |                                     `boolean`                                     |       `true`        | simulate, but do not fire POST/PUT/PATCH/DELETE actions (for testing)                                                                                                                                 |
+| **onAuthenticationError** |                                    `function`                                     |     `undefined`     | fired when calls return 401 or 403 (e.g. can redirect, etc)                                                                                                                                           |
+| **onCreate**              |                                    `function`                                     |     `undefined`     | fired when item is created successfully                                                                                                                                                               |
+| **onError**               |                                    `function`                                     |   `console.error`   | fired on internal error, or response errors                                                                                                                                                           |
+| **onLoad**                |                                    `function`                                     |     `undefined`     | fired when data is loaded successfully                                                                                                                                                                |
+| **onRemove**              |                                    `function`                                     |     `undefined`     | fired when item is deleted successfully                                                                                                                                                               |
+| **onReplace**             |                                    `function`                                     |     `undefined`     | fired when item is replaced successfully                                                                                                                                                              |
+| **onUpdate**              |                                    `function`                                     |     `undefined`     | fired when item is updated successfully                                                                                                                                                               |
+| **persist**               |                                     `boolean`                                     |       `false`       | will persist results to localStorage for fast delivery on page refresh                                                                                                                                |
+| **query**                 |                              `object` or `function`                               |     `undefined`     | can send fixed query params via object such as `{ isLive: true }` or via a dynamically executed query function (executed at time of load/interval), such as `() => ({ isLive: Math.random() > 0.5 })` |
+| **transform**             |                                    `function`                                     |     `undefined`     | use to reshape your API payload (e.g. `(data) => data.data.slice(0,2)`                                                                                                                                |
 
 ## Example 2
 
@@ -210,8 +210,7 @@ import React, { useState, useEffect } from 'react'
 import { createRestHook } from 'react-use-rest'
 
 // create a curried function to dynamically return a data hook from a collection name
-const useCollectionItems = (collectionName = '') =>
-  createRestHook(`/api/${collectionName}`)
+const useCollectionItems = (collectionName = '') => createRestHook(`/api/${collectionName}`)
 
 export const ViewCollectionItem = ({ collectionName, itemId }) => {
   console.log('viewing collection item', itemId, 'in', collectionName)
@@ -236,9 +235,7 @@ import { createRestHook } from 'react-use-rest'
 
 // create a data hook that might see a 401/Unauthorized
 const useKittens = createRestHook('/api/kittens', {
-  onAuthenticationError: err =>
-    (window.location.href =
-      '/login?returnTo=' + encodeURIComponent(window.location.href)),
+  onAuthenticationError: err => (window.location.href = '/login?returnTo=' + encodeURIComponent(window.location.href)),
 })
 
 export default function MyApp() {
@@ -247,10 +244,6 @@ export default function MyApp() {
   // if loading /api/kittens would fire a 401, the app
   // redirects to /login with enough info to return once logged in
 
-  return (
-    <div>
-      {isLoading ? 'loading kittens...' : `we found ${data.length} kittens!`}
-    </div>
-  )
+  return <div>{isLoading ? 'loading kittens...' : `we found ${data.length} kittens!`}</div>
 }
 ```

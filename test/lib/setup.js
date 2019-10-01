@@ -46,5 +46,6 @@ export const setup = () => {
     onLoad: jest.fn(),
     onError: jest.fn(),
     onAuthenticationError: jest.fn(),
+    fn: jest.fn(),
   }
 }

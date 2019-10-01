@@ -24,4 +24,28 @@ export const transformCollection = () =>
       await pause()
       compare('data', collection.slice(0, 1))
     })
+
+    it('does not fire on { collection: false } endpoints', async () => {
+      const { useItem, collection, item } = setup()
+      const { hook, compare, pause } = extractHook(() =>
+        useItem({
+          transformCollection: i => ({ ...i, bad: 'omen' }),
+          transformItem: i => ({ ...i, foo: 'bar' }),
+        })
+      )
+      await pause()
+      compare('data', { ...item, foo: 'bar' })
+    })
+
+    it('does not fire on collection item endpoints (e.g. useHook(id))', async () => {
+      const { useCollection, collection, item } = setup()
+      const { hook, compare, pause } = extractHook(() =>
+        useCollection(item.id, {
+          transformCollection: i => ({ ...i, bad: 'omen' }),
+          transformItem: i => ({ ...i, foo: 'bar' }),
+        })
+      )
+      await pause()
+      compare('data', { ...item, foo: 'bar' })
+    })
   })

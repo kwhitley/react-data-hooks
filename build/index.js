@@ -9,17 +9,15 @@ exports.createRestHook = void 0
 
 var _toConsumableArray2 = _interopRequireDefault(require('@babel/runtime/helpers/toConsumableArray'))
 
-var _defineProperty2 = _interopRequireDefault(require('@babel/runtime/helpers/defineProperty'))
-
 var _slicedToArray2 = _interopRequireDefault(require('@babel/runtime/helpers/slicedToArray'))
+
+var _defineProperty2 = _interopRequireDefault(require('@babel/runtime/helpers/defineProperty'))
 
 var _typeof2 = _interopRequireDefault(require('@babel/runtime/helpers/typeof'))
 
 var _react = require('react')
 
 var _useStoreHook = require('use-store-hook')
-
-var _deepmerge = _interopRequireDefault(require('deepmerge'))
 
 var _lib = require('./lib')
 
@@ -115,9 +113,11 @@ var createRestHook = function createRestHook(endpoint) {
       hookOptions = id // use first param as options
 
       id = undefined
-    } // local options are a blend of factory options and instantiation options
+    }
 
-    var options = (0, _deepmerge.default)(createHookOptions, hookOptions || {}) // extract options
+    hookOptions = hookOptions || {} // local options are a blend of factory options and instantiation options
+
+    var options = _objectSpread({}, createHookOptions, {}, hookOptions) // extract options
 
     var _options$autoload = options.autoload,
       autoload = _options$autoload === void 0 ? true : _options$autoload,
@@ -347,7 +347,7 @@ var createRestHook = function createRestHook(endpoint) {
                 return isMounted && setData()
               }
 
-              var updated = mergeOnUpdate ? (0, _deepmerge.default)(item, newData) : item
+              var updated = mergeOnUpdate ? _objectSpread({}, item, {}, newData) : item
               actionType === 'replace' && onReplace(updated) // event
 
               actionType === 'update' && onUpdate(updated) // event
@@ -365,7 +365,7 @@ var createRestHook = function createRestHook(endpoint) {
             }
 
             if (['update', 'replace'].includes(actionType)) {
-              item = mergeOnUpdate ? (0, _deepmerge.default)(item, newData) : item
+              item = mergeOnUpdate ? _objectSpread({}, item, {}, newData) : item
               log('updating item in internal collection', item)
               newData = data.map(function(i) {
                 return getId(i) === itemId ? item : i
@@ -374,7 +374,7 @@ var createRestHook = function createRestHook(endpoint) {
 
               actionType === 'update' && onUpdate(item) // event
             } else if (actionType === 'create') {
-              item = mergeOnCreate ? (0, _deepmerge.default)(item, newData) : item
+              item = mergeOnCreate ? _objectSpread({}, item, {}, newData) : item
               log('adding item to internal collection', item)
               newData = [].concat((0, _toConsumableArray2.default)(data), [item])
               onCreate(item) // event
@@ -434,7 +434,9 @@ var createRestHook = function createRestHook(endpoint) {
 
     var load = function load() {
       var loadOptions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {}
-      var opt = (0, _deepmerge.default)(options, loadOptions)
+
+      var opt = _objectSpread({}, options, {}, loadOptions)
+
       var query = opt.query,
         loadOnlyOnce = opt.loadOnlyOnce
       var fetchEndpoint = getEndpoint(endpoint, id) // if query param is a function, run it to derive up-to-date params
