@@ -1,6 +1,6 @@
 {
   "name": "react-use-rest",
-  "version": "1.7.4",
+  "version": "1.8.0",
   "description": "React.js data hooks for REST endpoints",
   "main": "index.js",
   "target": "esnext",
@@ -36,15 +36,15 @@
     "@testing-library/react-hooks": "^2.0.1",
     "chalk": "^2.4.2",
     "faker": "^4.1.0",
-    "fetch-mock": "^7.3.9",
-    "husky": "^3.0.5",
+    "fetch-mock": "^7.4.0",
+    "husky": "^3.0.8",
     "jest": "^24.9.0",
     "jest-fetch-mock": "^2.1.2",
     "prettier": "^1.18.2",
     "pretty-quick": "^1.11.1",
-    "react": "^16.9.0",
-    "react-dom": "^16.9.0",
-    "react-test-renderer": "^16.9.0",
+    "react": "^16.10.1",
+    "react-dom": "^16.10.1",
+    "react-test-renderer": "^16.10.1",
     "rollup": "^1.22.0",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-commonjs": "^10.1.0",
@@ -57,11 +57,11 @@
     "yarn-release": "^1.10.2"
   },
   "peerDependencies": {
-    "react": "^16.9.0",
-    "react-dom": "^16.9.0"
+    "react": "^16.10.1",
+    "react-dom": "^16.10.1"
   },
   "dependencies": {
-    "use-store-hook": "^1.6.0"
+    "use-store-hook": "^1.7.0"
   },
   "husky": {
     "hooks": {
