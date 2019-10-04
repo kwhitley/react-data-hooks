@@ -6,17 +6,25 @@
 [![npm version](https://badge.fury.io/js/react-use-rest.svg)](https://www.npmjs.com/package/react-use-rest)
 [![Build Status via Travis CI](https://travis-ci.org/kwhitley/react-use-rest.svg?branch=master)](https://travis-ci.org/kwhitley/react-use-rest)
 
-# Installation
+# Purpose
 
+Makes data fetching and CRUD operations against any REST endpoint this easy.
+
+```js
+import React from 'react'
+import { createRestHook } from 'react-use-rest'
+
+// create a data hook... this would likely be done elsewhere and imported here
+const useKittens = createRestHook('/api/kittens')
+
+export default function MyApp() {
+  let { data: kittens, isLoading } = useKittens() // use it, and store the results
+
+  return <div>{isLoading ? 'loading kittens...' : `we found ${kittens.length} kittens!`}</div>
+}
 ```
-yarn add react-use-rest
-```
 
-# What It Does
-
-React hooks are awesome, but loading and managing API endpoints can still be a pain. This library exports a single named
-function, `createRestHook(endpoint, options)`, which allows you to create a simple, yet powerful way to communicate with
-your endpoints, without needing advanced state management like redux/mobx.
+[continue to other examples...](#example-2)
 
 ### Features
 
@@ -32,36 +40,17 @@ your endpoints, without needing advanced state management like redux/mobx.
 - [x] specify how to derive id from collection items (used to generate endpoints like /api/items/3)
 - [x] persist non-sensitive results to prevent load time waits (while still updating after fetch)
 - [x] data is shared across components without context or prop-drilling, thanks to **[use-store-hook](https://www.npmjs.com/package/use-store-hook)**
+- [x] GET requests shared using internal pooling to cut down on duplicate network requests
 
 # Examples
 
-- **[basic](#example-1)**
+- **[basic](#purpose)**
 - **[all options/returns (until documentation details all params)](#example-2)**
 - **[chained hooks (loading details dynamically)](#example-3)**
 - **[creating hooks from props (dynamic hook generation)](#example-4)**
 - **[handling 401/Unauthorized](#example-5)**
 
 ---
-
-## Example 1
-
-**(basic usage)**
-
-```js
-import React from 'react'
-import { createRestHook } from 'react-use-rest'
-
-// create a data hook
-const useKittens = createRestHook('/api/kittens')
-
-export default function MyApp() {
-  let { data: kittens, isLoading } = useKittens() // use it
-
-  return <div>{isLoading ? 'loading kittens...' : `we found ${kittens.length} kittens!`}</div>
-}
-```
-
-[continue to other examples...](#example-2)
 
 # API
 
@@ -250,6 +239,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.8.0** - decreased module size to 4.3k gzipped
 - **v1.7.3** - fix: re-embeds default Content-Type: application/json header
 - **v1.7.1** - converted from babel to rollup + typescript to decrease module size
 - **v1.7.0** - added `fetchOptions` option (allows for custom headers to be passed with hook requests)
