@@ -74,6 +74,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   let isCollectionExplicitlySet = options.hasOwnProperty('isCollection')
   let isFixedEndpoint = isCollection === false
+  var loadingInterval
 
   // allow { log: true } alias as well as routing to custom loggers
   log = log === true ? console.log : log
@@ -412,7 +413,25 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     log('react-use-rest: id changed:', id)
     log('react-use-rest: loading check', { autoload, id, idExplicitlyPassed, isMounted, loadedOnce, loadOnlyOnce })
 
-    const exit = () => {
+    if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
+      // bail if no longer mounted
+      if (!isMounted || (loadOnlyOnce && loadedOnce)) {
+        log('skipping load', { isMounted, loadOnlyOnce, loadedOnce })
+      } else {
+        autoload && load()
+
+        if (interval && !loadingInterval) {
+          log('react-use-rest: adding load interval', interval)
+
+          loadingInterval = setInterval(load, interval)
+        }
+      }
+    }
+  }, [id])
+
+  // unmount procedure
+  useEffect(() => {
+    return () => {
       if (loadingInterval) {
         log('clearing load() interval', { interval })
         clearInterval(loadingInterval)
@@ -422,23 +441,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
       isMountedRef.current = false
     }
-
-    if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
-      // bail if no longer mounted
-      if (!isMounted || (loadOnlyOnce && loadedOnce)) {
-        log('skipping load', { isMounted, loadOnlyOnce, loadedOnce })
-        return exit
-      }
-
-      autoload && load()
-
-      if (interval) {
-        var loadingInterval = setInterval(load, interval)
-      }
-    }
-
-    return exit
-  }, [id])
+  }, [])
 
   let loadFunction = eventable(load)
 
