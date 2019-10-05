@@ -410,6 +410,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   // EFFECT: SET INITIAL LOAD, LOADING INTERVAL, ETC
   useEffect(() => {
     log('react-use-rest: id changed:', id)
+    log('react-use-rest: loading check', { autoload, id, idExplicitlyPassed, isMounted, loadedOnce, loadOnlyOnce })
 
     const exit = () => {
       if (loadingInterval) {
@@ -425,6 +426,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
       // bail if no longer mounted
       if (!isMounted || (loadOnlyOnce && loadedOnce)) {
+        log('skipping load', { isMounted, loadOnlyOnce, loadedOnce })
         return exit
       }
 
