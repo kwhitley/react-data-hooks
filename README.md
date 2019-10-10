@@ -12,10 +12,10 @@ Makes data fetching and CRUD operations against any REST endpoint this easy.
 
 ```js
 import React from 'react'
-import { createRestHook } from 'react-use-rest'
+import { createRestHook } from 'data-hooks'
 
 // create a data hook... this would likely be done elsewhere and imported here
-const useKittens = createRestHook('/api/kittens')
+const useKittens = dataHook('/api/kittens')
 
 export default function MyApp() {
   let { data: kittens, isLoading } = useKittens() // use it, and store the results
@@ -87,7 +87,7 @@ export default function MyApp() {
 
 ```js
 import React from 'react'
-import { createRestHook } from 'react-use-rest'
+import { createRestHook } from 'data-hooks'
 
 // create a data hook
 const useKittens = createRestHook('/api/kittens') // any options may be included here for convenience
@@ -157,7 +157,7 @@ export default function MyApp() {
 
 ```js
 import React from 'react'
-import { createRestHook } from 'react-use-rest'
+import { createRestHook } from 'data-hooks'
 
 // create a data hook
 const useKittens = createRestHook('/api/kittens') // any options may be included here for convenience
@@ -196,7 +196,7 @@ export default MyApp = () => {
 
 ```js
 import React, { useState, useEffect } from 'react'
-import { createRestHook } from 'react-use-rest'
+import { createRestHook } from 'data-hooks'
 
 // create a curried function to dynamically return a data hook from a collection name
 const useCollectionItems = (collectionName = '') => createRestHook(`/api/${collectionName}`)
@@ -220,7 +220,7 @@ export const ViewCollectionItem = ({ collectionName, itemId }) => {
 
 ```js
 import React from 'react'
-import { createRestHook } from 'react-use-rest'
+import { createRestHook } from 'data-hooks'
 
 // create a data hook that might see a 401/Unauthorized
 const useKittens = createRestHook('/api/kittens', {
