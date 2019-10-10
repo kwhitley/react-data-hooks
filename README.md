@@ -1,4 +1,4 @@
-# react-use-rest
+# react-data-hooks
 
 ## Elegant, powerful, full-CRUD API data fetching & control via React.js data hooks
 
