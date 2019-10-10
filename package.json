@@ -1,6 +1,6 @@
 {
   "name": "react-data-hooks",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "description": "Elegant, powerful, full-CRUD API data fetching & control via React.js data hooks",
   "main": "index.js",
   "target": "esnext",
@@ -26,10 +26,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kwhitley/react-use-rest.git"
+    "url": "https://github.com/kwhitley/react-data-hooks.git"
   },
   "bugs": {
-    "url": "https://github.com/kwhitley/react-use-rest/issues",
+    "url": "https://github.com/kwhitley/react-data-hooks/issues",
     "email": "krwhitley@gmail.com"
   },
   "devDependencies": {
