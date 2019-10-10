@@ -239,6 +239,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.9.0** - replaced internal use-store-hook with updated module location use-store to avoid deprecation notices
 - **v1.8.0** - decreased module size to 4.3k gzipped
 - **v1.7.3** - fix: re-embeds default Content-Type: application/json header
 - **v1.7.1** - converted from babel to rollup + typescript to decrease module size

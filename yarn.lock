@@ -5477,6 +5477,11 @@ use-store-hook@^1.7.0:
   dependencies:
     "@testing-library/react" "^9.2.0"
 
+use-store@^1.7.3:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/use-store/-/use-store-1.7.3.tgz#abba85e8d393f8f265ea4838ce3c8e1912c8d61c"
+  integrity sha512-wcThG2qnjPRv1Qee3Yemfl7Wwdtz0lR2fS9TH7JKfHT+ypaMM4R91Y4HP1Nitc+r6UQ9l6Ba+ZYDNbFzLM81Xg==
+
 use@^3.1.0:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/use/-/use-3.1.1.tgz#d50c8cac79a19fbc20f2911f56eb973f4e10070f"

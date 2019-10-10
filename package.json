@@ -1,6 +1,6 @@
 {
   "name": "react-use-rest",
-  "version": "1.8.3",
+  "version": "1.9.0",
   "description": "React.js data hooks for REST endpoints",
   "main": "index.js",
   "target": "esnext",
@@ -61,7 +61,7 @@
     "react-dom": "^16.10.1"
   },
   "dependencies": {
-    "use-store-hook": "^1.7.0"
+    "use-store": "^1.7.3"
   },
   "husky": {
     "hooks": {

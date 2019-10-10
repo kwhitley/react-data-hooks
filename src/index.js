@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useStore } from 'use-store-hook'
+import useStore from 'use-store'
 import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
 
 const LOG_PREFIX = '[react-use-rest]:'
@@ -410,7 +410,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   // EFFECT: SET INITIAL LOAD, LOADING INTERVAL, ETC
   useEffect(() => {
-    log('react-use-rest: id changed:', id)
+    if (idExplicitlyPassed) {
+      log('react-use-rest: id changed:', id)
+    }
+
     log('react-use-rest: loading check', { autoload, id, idExplicitlyPassed, isMounted, loadedOnce, loadOnlyOnce })
 
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
@@ -426,6 +429,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           loadingInterval = setInterval(load, interval)
         }
       }
+    }
+
+    if (idExplicitlyPassed && id === undefined && data !== initialValue) {
+      setData(initialValue)
     }
   }, [id])
 
