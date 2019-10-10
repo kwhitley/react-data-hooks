@@ -1,6 +1,6 @@
 # react-use-rest
 
-## React.js data hooks for REST API endpoints
+## Elegant, powerful, full-CRUD API data fetching & control via React.js data hooks
 
 [![minified + gzipped size](https://badgen.net/bundlephobia/minzip/react-use-rest)](https://bundlephobia.com/result?p=react-use-rest)
 [![npm version](https://badge.fury.io/js/react-use-rest.svg)](https://www.npmjs.com/package/react-use-rest)
@@ -8,19 +8,32 @@
 
 # Purpose
 
-Makes data fetching and CRUD operations against any REST endpoint this easy.
+Makes data fetching and CRUD operations against any REST endpoint this easy - all for ~4.4KB gzipped.
 
 ```js
 import React from 'react'
-import { createRestHook } from 'data-hooks'
+import { createRestHook } from 'react-data-hooks'
 
 // create a data hook... this would likely be done elsewhere and imported here
 const useKittens = dataHook('/api/kittens')
 
 export default function MyApp() {
-  let { data: kittens, isLoading } = useKittens() // use it, and store the results
+  let { data: kittens, isLoading, create } = useKittens()
 
-  return <div>{isLoading ? 'loading kittens...' : `we found ${kittens.length} kittens!`}</div>
+  return (
+    <div>
+      {
+        isLoading
+        ? 'loading kittens...'
+        : `we found ${kittens.length} kittens!` // will auto increase after successful button click/POST
+      }
+
+      <!-- when clicked, will POST a kitten, then automatically add response to the internal kittens collection -->
+      <button onClick={() => create({ name: 'Mittens', age: 1 })}>
+        Create a Kitten
+      </button>
+    </div>
+  )
 }
 ```
 
@@ -87,7 +100,7 @@ export default function MyApp() {
 
 ```js
 import React from 'react'
-import { createRestHook } from 'data-hooks'
+import { createRestHook } from 'react-data-hooks'
 
 // create a data hook
 const useKittens = createRestHook('/api/kittens') // any options may be included here for convenience
@@ -157,7 +170,7 @@ export default function MyApp() {
 
 ```js
 import React from 'react'
-import { createRestHook } from 'data-hooks'
+import { createRestHook } from 'react-data-hooks'
 
 // create a data hook
 const useKittens = createRestHook('/api/kittens') // any options may be included here for convenience
@@ -196,7 +209,7 @@ export default MyApp = () => {
 
 ```js
 import React, { useState, useEffect } from 'react'
-import { createRestHook } from 'data-hooks'
+import { createRestHook } from 'react-data-hooks'
 
 // create a curried function to dynamically return a data hook from a collection name
 const useCollectionItems = (collectionName = '') => createRestHook(`/api/${collectionName}`)
@@ -220,7 +233,7 @@ export const ViewCollectionItem = ({ collectionName, itemId }) => {
 
 ```js
 import React from 'react'
-import { createRestHook } from 'data-hooks'
+import { createRestHook } from 'react-data-hooks'
 
 // create a data hook that might see a 401/Unauthorized
 const useKittens = createRestHook('/api/kittens', {
@@ -239,6 +252,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.10.0** - moved to "react-data-hooks", as it's a hook factory function, not a direct hook export
 - **v1.9.0** - replaced internal use-store-hook with updated module location use-store to avoid deprecation notices
 - **v1.8.0** - decreased module size to 4.3k gzipped
 - **v1.7.3** - fix: re-embeds default Content-Type: application/json header

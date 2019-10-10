@@ -1,7 +1,7 @@
 {
-  "name": "data-hooks",
-  "version": "1.10.0",
-  "description": "React.js data hooks for REST endpoints",
+  "name": "react-data-hooks",
+  "version": "1.10.1",
+  "description": "Elegant, powerful, full-CRUD API data fetching & control via React.js data hooks",
   "main": "index.js",
   "target": "esnext",
   "scripts": {
