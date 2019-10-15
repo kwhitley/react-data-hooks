@@ -2,9 +2,9 @@
 
 ## Elegant, powerful, full-CRUD API data fetching & control via React.js data hooks
 
-[![minified + gzipped size](https://badgen.net/bundlephobia/minzip/react-use-rest)](https://bundlephobia.com/result?p=react-use-rest)
-[![npm version](https://badge.fury.io/js/react-use-rest.svg)](https://www.npmjs.com/package/react-use-rest)
-[![Build Status via Travis CI](https://travis-ci.org/kwhitley/react-use-rest.svg?branch=master)](https://travis-ci.org/kwhitley/react-use-rest)
+[![minified + gzipped size](https://badgen.net/bundlephobia/minzip/react-data-hooks)](https://bundlephobia.com/result?p=react-data-hooks)
+[![npm version](https://badge.fury.io/js/react-data-hooks.svg)](https://www.npmjs.com/package/react-data-hooks)
+[![Build Status via Travis CI](https://travis-ci.org/kwhitley/react-data-hooks.svg?branch=master)](https://travis-ci.org/kwhitley/react-data-hooks)
 
 # Purpose
 

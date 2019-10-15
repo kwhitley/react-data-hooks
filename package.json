@@ -1,6 +1,6 @@
 {
   "name": "react-data-hooks",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "Elegant, powerful, full-CRUD API data fetching & control via React.js data hooks",
   "main": "index.js",
   "target": "esnext",
