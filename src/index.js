@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import useStore from 'use-store'
 import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
 
@@ -119,7 +119,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       ? JSON.stringify({ dynamic: true })
       : undefined
 
-  let key = 'resthook:' + getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
+  let key = 'rdh:' + getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
 
   let [state, setState] = useStore(
     key,
