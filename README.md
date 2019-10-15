@@ -252,6 +252,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.11.0** - updated internals to use a single setState function (to minimize renders), adds hasLoaded { boolean } to output, fix { log: false } bug
 - **v1.10.0** - moved to "react-data-hooks", as it's a hook factory function, not a direct hook export
 - **v1.9.0** - replaced internal use-store-hook with updated module location use-store to avoid deprecation notices
 - **v1.8.0** - decreased module size to 4.3k gzipped

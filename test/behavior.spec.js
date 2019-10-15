@@ -8,6 +8,8 @@ describe('BEHAVIOR' + example1, () => {
     returns.create()
     returns.data()
     returns.error()
+    returns.filtered()
+    returns.hasLoaded()
     returns.isLoading()
     returns.key()
     returns.load()
