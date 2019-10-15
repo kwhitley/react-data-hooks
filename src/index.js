@@ -314,10 +314,20 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   const create = createActionType({ actionType: 'create', method: 'post' })
 
   // data load function
-  const load = (loadOptions = {}) => {
+  const load = (...loadArgs) => {
+    let [loadId, loadOptions] = loadArgs
+    let idPassed = loadArgs.length && typeof loadArgs[0] !== 'object'
+
+    if (typeof loadId === 'object' && loadOptions === undefined) {
+      // e.g. useHook({ something })
+      loadOptions = loadId // use first param as options
+      loadId = undefined
+    }
+    loadOptions = loadOptions || {}
+
     let opt = { ...options, ...loadOptions }
     let { query, loadOnlyOnce } = opt
-    let fetchEndpoint = getEndpoint(endpoint, id)
+    let fetchEndpoint = getEndpoint(endpoint, loadId || id)
 
     // if query param is a function, run it to derive up-to-date params
     query = typeof query === 'function' ? query() : query

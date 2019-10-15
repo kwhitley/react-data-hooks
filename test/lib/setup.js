@@ -14,7 +14,15 @@ export const setup = () => {
   var api = new MockApi()
   var collection = api.get()
   var item = randomItem(collection)
+  var item2
+
+  // get a unique item2
+  do {
+    item2 = randomItem(collection)
+  } while (item === item2)
+
   var itemEndpoint = `${endpoint}/${item.id}`
+  var item2Endpoint = `${endpoint}/${item2.id}`
   var useItem = createRestHook(itemEndpoint, { isCollection: false })
   var updated = { ...item, foo: 'bar' }
   var newItem = { foo: 'bar' }
@@ -22,6 +30,7 @@ export const setup = () => {
 
   fetchMock.getOnce(endpoint, api.get())
   fetchMock.getOnce(itemEndpoint, item)
+  fetchMock.getOnce(item2Endpoint, item2)
   fetchMock.patchOnce(itemEndpoint, updated)
   fetchMock.putOnce(itemEndpoint, updated)
   fetchMock.deleteOnce(itemEndpoint, 200)
@@ -34,6 +43,8 @@ export const setup = () => {
     api,
     item,
     itemEndpoint,
+    item2,
+    item2Endpoint,
     newItem,
     useItem,
     updated,

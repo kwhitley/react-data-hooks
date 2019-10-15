@@ -1,6 +1,7 @@
 import 'whatwg-fetch'
 import faker from 'faker'
 import fetchMock from 'fetch-mock'
+import { random } from 'supergeneric/math'
 
 const COLLECTION_MAX = 5
 export const COLLECTION_ENDPOINT = 'collection_endpoint'
@@ -19,7 +20,7 @@ export const generateItem = () => ({
 })
 
 export const generateCollection = () =>
-  Array(Math.ceil(Math.random() * COLLECTION_MAX))
+  Array(random(2, COLLECTION_MAX))
     .fill(null)
     .map(generateItem)
 
