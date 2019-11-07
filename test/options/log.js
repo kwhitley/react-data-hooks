@@ -14,15 +14,6 @@ export const log = () =>
       window.console.log = originalLog
     })
 
-    it('allows log to be explicitly set to false { log: false }', async () => {
-      const { useCollection } = setup()
-      let originalLog = window.console.log
-      let log = (window.console.log = jest.fn())
-      const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false, log: false }))
-      expect(log).not.toHaveBeenCalled()
-      window.console.log = originalLog
-    })
-
     it('uses console.log if { log: true }', async () => {
       const { useCollection } = setup()
       let originalLog = window.console.log
