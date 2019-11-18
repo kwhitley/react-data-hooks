@@ -1,7 +1,6 @@
 export * from './create'
 export * from './data'
 export * from './error'
-export * from './filtered'
 export * from './hasLoaded'
 export * from './isLoading'
 export * from './key'
