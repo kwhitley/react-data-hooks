@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useStore from 'use-store'
 import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
 
-const LOG_PREFIX = '[react-use-rest]:'
+const LOG_PREFIX = '[react-data-hooks]: '
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
@@ -22,10 +22,12 @@ const eventable = fn => (...args) => {
 // instantiate shared fetch pool for GET requests
 const fetchStore = new FetchStore()
 
-const createLogAndSetMeta = ({ log, setState }) => newState => {
-  log('setting state', newState)
-  setState(newState)
+const createLogAndSetMeta = ({ log, setMeta }) => newMeta => {
+  log('setting meta', newMeta)
+  setMeta(newMeta)
 }
+
+const noop = () => {}
 
 export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
   let [id, hookOptions] = args
@@ -77,7 +79,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   var loadingInterval
 
   // allow { log: true } alias as well as routing to custom loggers
-  log = log === true ? console.log : log || (() => {})
+  log = log === true ? (...args) => console.log.apply(null, [LOG_PREFIX, ...args]) : log || noop
 
   if (axios !== fetchAxios) {
     // log('using custom axios-fetch', axios)
@@ -121,22 +123,17 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   let key = 'rdh:' + getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
 
-  let [state, setState] = useStore(
-    key,
-    {
-      data: initialValue,
-      filtered: initialValue,
-      isLoading: autoload,
-      hasLoaded: false,
-      error: undefined,
-      key: getHash(),
-    },
-    options
-  )
-
+  let [data, setData] = useStore(key, initialValue, options)
+  let [meta, setMeta] = useState({
+    isLoading: autoload,
+    hasLoaded: false,
+    filtered: initialValue,
+    error: undefined,
+    key: getHash(),
+  })
   let prevFetchConfig = undefined
 
-  const logAndSetState = createLogAndSetMeta({ log, setState })
+  const logAndSetMeta = createLogAndSetMeta({ log, setMeta })
 
   const handleError = (error = {}) => {
     var errorObj
@@ -163,8 +160,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     log(`${LOG_PREFIX} handleError executed`, { errorObj })
 
     isMounted &&
-      logAndSetState({
-        ...state,
+      logAndSetMeta({
+        ...meta,
         isLoading: false,
         error: errorObj,
       })
@@ -209,14 +206,13 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     }
 
     isMounted &&
-      logAndSetState({
-        ...state,
+      logAndSetMeta({
+        ...meta,
         isLoading: true,
       })
 
     const resolve = response => {
       try {
-        let data = state.data
         let newData = response.data
 
         if (transform) {
@@ -234,14 +230,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         if (!isCollection) {
           log(`non-collection action ${actionType}: setting data to`, item)
           if (actionType === 'remove') {
-            onRemove(state.data)
-            return (
-              isMounted &&
-              setState({
-                ...state,
-                data: undefined,
-              })
-            )
+            onRemove(data)
+            return isMounted && setData()
           }
 
           let updated = mergeOnUpdate ? { ...item, ...newData } : item
@@ -249,10 +239,11 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           actionType === 'replace' && onReplace(updated) // event
           actionType === 'update' && onUpdate(updated) // event
 
+          isMounted && setData(updated)
+
           isMounted &&
-            logAndSetState({
-              ...state,
-              data: updated,
+            logAndSetMeta({
+              ...meta,
               isLoading: false,
               error: undefined,
               key: getHash(),
@@ -284,10 +275,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         }
 
         // update internal data
+        isMounted && setData(newData)
         isMounted &&
-          logAndSetState({
-            ...state,
-            data: newData,
+          logAndSetMeta({
+            ...meta,
             isLoading: false,
             key: getHash(),
           })
@@ -335,8 +326,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     log('GET', { endpoint: fetchEndpoint, query })
 
     isMounted &&
-      logAndSetState({
-        ...state,
+      logAndSetMeta({
+        ...meta,
         isLoading: true,
         error: undefined,
       })
@@ -374,9 +365,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           }
 
           if (isMounted) {
-            logAndSetState({
-              ...state,
-              data,
+            setData(data)
+
+            logAndSetMeta({
+              ...meta,
               hasLoaded: true,
               filtered: data, // set filtered to loaded data... useEffect will trigger re-render with filtered data
               isLoading: false,
@@ -394,7 +386,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   // EFFECT: UPDATE FILTERED DATA WHEN FILTER OR DATA CHANGES
   useEffect(() => {
-    let data = state.data
     // complete avoid this useEffect pass when no filter set or not working on collection
     if (!filter || !isCollection || !Array.isArray(data)) {
       return () => {}
@@ -402,7 +393,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
     log('filter changed on datahook', [filter, data])
     var filtered = data
-    var prev = state.filtered
+    var prev = meta.filtered
 
     if (filter) {
       if (typeof filter === 'function') {
@@ -420,49 +411,41 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     if (!sameLength || !allMatched) {
       log('changes in filtered results detected, new filtered =', filtered)
       isMounted &&
-        logAndSetState({
-          ...state,
+        logAndSetMeta({
+          ...meta,
           filtered,
           key: getHash(),
         })
     }
-  }, [filter, state.data])
+  }, [filter, data])
 
   // EFFECT: SET INITIAL LOAD, LOADING INTERVAL, ETC
   useEffect(() => {
+    let { hasLoaded } = meta
+
     if (idExplicitlyPassed) {
-      log('react-use-rest: id changed:', id)
+      log('id changed:', id)
     }
 
-    log('react-use-rest: loading check', {
-      autoload,
-      id,
-      idExplicitlyPassed,
-      isMounted,
-      hasLoaded: state.hasLoaded,
-      loadOnlyOnce,
-    })
+    log('loading check', { autoload, id, idExplicitlyPassed, isMounted, hasLoaded, loadOnlyOnce })
 
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
       // bail if no longer mounted
-      if (!isMounted || (loadOnlyOnce && state.hasLoaded)) {
-        log('skipping load', { isMounted, loadOnlyOnce, hasLoaded: state.hasLoaded })
+      if (!isMounted || (loadOnlyOnce && hasLoaded)) {
+        log('skipping load', { isMounted, loadOnlyOnce, hasLoaded })
       } else {
         autoload && load()
 
         if (interval && !loadingInterval) {
-          log('react-use-rest: adding load interval', interval)
+          log('adding load interval', interval)
 
           loadingInterval = setInterval(load, interval)
         }
       }
     }
 
-    if (idExplicitlyPassed && id === undefined && state.data !== initialValue) {
-      setState({
-        ...state,
-        data: initialValue,
-      })
+    if (idExplicitlyPassed && id === undefined && data !== initialValue) {
+      setData(initialValue)
     }
   }, [id])
 
@@ -483,12 +466,13 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   let loadFunction = eventable(load)
 
   return {
-    ...state,
+    data,
     load: loadFunction,
     refresh: loadFunction,
     create,
     remove,
     update,
     replace,
+    ...meta,
   }
 }

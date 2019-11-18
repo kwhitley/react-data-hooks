@@ -4,9 +4,9 @@ export const extractHook = hookFn => {
   let renderedHook = renderHook(hookFn)
 
   return {
+    ...renderedHook,
     hook: () => renderedHook.result.current,
     pause: renderedHook.waitForNextUpdate,
-    compare: (...args) =>
-      expect(renderedHook.result.current).toHaveProperty(...args),
+    compare: (...args) => expect(renderedHook.result.current).toHaveProperty(...args),
   }
 }

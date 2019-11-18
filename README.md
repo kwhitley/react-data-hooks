@@ -110,6 +110,7 @@ export default function MyApp() {
   let {
     data = [],                      // data returned from API (defaults to empty array)
     filtered = [],                  // data, as filtered with filter function (options) responds to changes in filter or data
+    hasLoaded,                      // flag for if the data has yet loaded via GET (default false)
     isLoading,                      // isLoading flag (true during pending requests)
     error,                          // API error (if any) - this is
     key,                            // random render-busting attr to explode into a component on data changes.  Looks like { key: 123556456421 }

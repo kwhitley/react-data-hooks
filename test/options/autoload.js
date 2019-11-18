@@ -17,4 +17,16 @@ export const autoload = () =>
       const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
       compare('isLoading', false)
     })
+
+    // it('loads only once, even when component rerenders', async () => {
+    //   const { useCollection, onLoad } = setup()
+    //   const { rerender, hook, compare, pause } = extractHook(() => useCollection({ onLoad }))
+    //   await pause()
+    //   expect(onLoad).toHaveBeenCalled()
+    //   act(() => {
+    //     rerender()
+    //   })
+    //   await pause()
+    //   expect(onLoad).toHaveBeenCalledTimes(1)
+    // })
   })
