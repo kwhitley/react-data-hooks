@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useStore from 'use-store'
 import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
 
-const LOG_PREFIX = '[react-use-rest]:'
+const LOG_PREFIX = '[react-data-hooks]: '
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
@@ -26,6 +26,8 @@ const createLogAndSetMeta = ({ log, setMeta }) => newMeta => {
   log('setting meta', newMeta)
   setMeta(newMeta)
 }
+
+const noop = () => {}
 
 export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
   let [id, hookOptions] = args
@@ -77,7 +79,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   var loadingInterval
 
   // allow { log: true } alias as well as routing to custom loggers
-  log = log === true ? console.log : log
+  log = log === true ? (...args) => console.log.apply(null, [LOG_PREFIX, ...args]) : log || noop
 
   if (axios !== fetchAxios) {
     // log('using custom axios-fetch', axios)
@@ -122,9 +124,9 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   let key = 'rdh:' + getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
 
   let [data, setData] = useStore(key, initialValue, options)
-  let [loadedOnce, setLoadedOnce] = useStore(key + ':loaded.once', false)
   let [meta, setMeta] = useState({
     isLoading: autoload,
+    hasLoaded: false,
     filtered: initialValue,
     error: undefined,
     key: getHash(),
@@ -365,10 +367,9 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           if (isMounted) {
             setData(data)
 
-            !loadedOnce && setLoadedOnce(true)
-
             logAndSetMeta({
               ...meta,
+              hasLoaded: true,
               filtered: data, // set filtered to loaded data... useEffect will trigger re-render with filtered data
               isLoading: false,
               error: undefined,
@@ -420,21 +421,23 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   // EFFECT: SET INITIAL LOAD, LOADING INTERVAL, ETC
   useEffect(() => {
+    let { hasLoaded } = meta
+
     if (idExplicitlyPassed) {
-      log('react-use-rest: id changed:', id)
+      log('id changed:', id)
     }
 
-    log('react-use-rest: loading check', { autoload, id, idExplicitlyPassed, isMounted, loadedOnce, loadOnlyOnce })
+    log('loading check', { autoload, id, idExplicitlyPassed, isMounted, hasLoaded, loadOnlyOnce })
 
     if (!idExplicitlyPassed || (idExplicitlyPassed && id !== undefined)) {
       // bail if no longer mounted
-      if (!isMounted || (loadOnlyOnce && loadedOnce)) {
-        log('skipping load', { isMounted, loadOnlyOnce, loadedOnce })
+      if (!isMounted || (loadOnlyOnce && hasLoaded)) {
+        log('skipping load', { isMounted, loadOnlyOnce, hasLoaded })
       } else {
         autoload && load()
 
         if (interval && !loadingInterval) {
-          log('react-use-rest: adding load interval', interval)
+          log('adding load interval', interval)
 
           loadingInterval = setInterval(load, interval)
         }
@@ -464,15 +467,12 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
 
   return {
     data,
-    filtered: meta.filtered,
     load: loadFunction,
     refresh: loadFunction,
     create,
     remove,
     update,
     replace,
-    isLoading: meta.isLoading,
-    error: meta.error,
-    key: meta.key,
+    ...meta,
   }
 }
