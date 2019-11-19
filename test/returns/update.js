@@ -44,6 +44,7 @@ export const update = () =>
       await pause()
       expect(onUpdate).toHaveBeenCalled()
       expect(fn).toHaveBeenCalled()
+      expect(fn).toHaveBeenCalledWith(updated)
     })
 
     it('collection hook does not update self, or fire onUpdate with response error', async () => {

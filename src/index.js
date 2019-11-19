@@ -249,7 +249,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
               key: getHash(),
             })
 
-          return true
+          return updated
         }
 
         if (['update', 'replace'].includes(actionType)) {
@@ -285,6 +285,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       } catch (err) {
         handleError(err)
       }
+
+      return item
     }
 
     log(`calling "${method}" to`, getEndpoint(endpoint, itemId), payload)

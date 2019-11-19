@@ -253,6 +253,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.12.4** - fixes: CRUD functions properly pass item to .then() promise (e.g. update(item, oldItem).then(updated => console.log(updated)))
 - **v1.12.2** - fixes: instability introduced with 1.11.0, { log: false }
 - **v1.12.0** - adds ability to load item endpoints directly via load(id, [options])
 - **v1.11.0** - updated internals to use a single setState function (to minimize renders), adds hasLoaded { boolean } to output, fix { log: false } bug
