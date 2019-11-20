@@ -82,7 +82,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   log = log === true ? (...args) => console.log.apply(null, [LOG_PREFIX, ...args]) : log || noop
 
   if (axios !== fetchAxios) {
-    // log('using custom axios-fetch', axios)
+    log('using custom axios', axios)
     fetchStore.setAxios(axios)
   }
 
@@ -345,7 +345,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           log('GET RESPONSE:', data)
 
           // all data gets base transform
-
           if (transform) {
             data = transform(data)
             log('AFTER transform:', data)
@@ -358,7 +357,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
           }
 
           if (transformItem) {
-            if (isCollection && data && data.length) {
+            if (isCollection && Array.isArray(data)) {
               data = data.map(transformItem)
             } else {
               data = transformItem(data)

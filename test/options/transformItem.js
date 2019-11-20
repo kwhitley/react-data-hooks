@@ -48,4 +48,13 @@ export const transformItem = () =>
       compare('data', collection.map(i => (i.id !== item.id ? i : updated)))
       expect(onUpdate).toHaveBeenCalled()
     })
+
+    it('will not fire on empty array result', async () => {
+      const { useCollection, collection, api, endpoint, fn } = setup()
+      fetchMock.getOnce(endpoint, [], { overwriteRoutes: true })
+      const { hook, compare, pause } = extractHook(() => useCollection({ transformItem, fn }))
+      await pause()
+      expect(fn).not.toHaveBeenCalled()
+      compare('data', [])
+    })
   })

@@ -15,7 +15,7 @@ import React from 'react'
 import { createRestHook } from 'react-data-hooks'
 
 // create a data hook... this would likely be done elsewhere and imported here
-const useKittens = dataHook('/api/kittens')
+const useKittens = createRestHook('/api/kittens')
 
 export default function MyApp() {
   let { data: kittens, isLoading, create } = useKittens()
@@ -42,17 +42,17 @@ export default function MyApp() {
 ### Features
 
 - [x] auto-loading
-- [x] complete REST (GET/POST/PUT/PATCH/DELETE)
+- [x] complete REST (GET/POST/PUT/PATCH/DELETE) operations
 - [x] collections, items in collections, or fixed endpoints
 - [x] polling
-- [x] transforming payloads
-- [x] filtering payload results
+- [x] transforming payloads (response, collection, and item level)
+- [x] dynamic filtering results
 - [x] queries (static via object, or dynamic via function)
 - [x] collections self-maintain after POST/PUT/PATCH/DELETE
 - [x] event handling for errors, after responses, and on authentication failures
 - [x] specify how to derive id from collection items (used to generate endpoints like /api/items/3)
 - [x] persist non-sensitive results to prevent load time waits (while still updating after fetch)
-- [x] data is shared across components without context or prop-drilling, thanks to **[use-store-hook](https://www.npmjs.com/package/use-store-hook)**
+- [x] data is shared across components without context or prop-drilling, thanks to **[use-store](https://www.npmjs.com/package/use-store)**
 - [x] GET requests shared using internal pooling to cut down on duplicate network requests
 
 # Examples
@@ -253,6 +253,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.12.5** - fix: transformItem should not apply to empty array response
 - **v1.12.4** - fixes: CRUD functions properly pass item to .then() promise (e.g. update(item, oldItem).then(updated => console.log(updated)))
 - **v1.12.2** - fixes: instability introduced with 1.11.0, { log: false }
 - **v1.12.0** - adds ability to load item endpoints directly via load(id, [options])
