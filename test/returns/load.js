@@ -51,4 +51,31 @@ export const load = () =>
       await pause()
       compare('data', flaggedFeed)
     })
+
+    describe('options enabled on load() as overrides of upstream options', () => {
+      it(`fetchOptions: Object`, async () => {
+        const fetchOptions = { headers: { Authorization: 'foo' } }
+        const { useCollection, api, endpoint } = setup()
+        let flaggedFeed = api.get().map(i => ({ ...i, flag: Math.random() > 5 }))
+        fetchMock.getOnce(endpoint, flaggedFeed, { ...fetchOptions, overwriteRoutes: true })
+        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
+        act(() => {
+          hook().load({ fetchOptions })
+        })
+        await pause()
+        compare('data', flaggedFeed)
+      })
+
+      it(`query: Object | Function:Object`, async () => {
+        const { useCollection, api, endpoint } = setup()
+        let flaggedFeed = api.get().map(i => ({ ...i, flag: Math.random() > 5 }))
+        fetchMock.getOnce(endpoint + '?limit=1', flaggedFeed)
+        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
+        act(() => {
+          hook().load({ query: { limit: 1 } })
+        })
+        await pause()
+        compare('data', flaggedFeed)
+      })
+    })
   })

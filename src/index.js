@@ -319,7 +319,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     loadOptions = loadOptions || {}
 
     let opt = { ...options, ...loadOptions }
-    let { query, loadOnlyOnce } = opt
+    let { query, fetchOptions } = opt
     let fetchEndpoint = getEndpoint(endpoint, loadId || id)
 
     // if query param is a function, run it to derive up-to-date params
