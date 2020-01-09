@@ -253,6 +253,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.12.7** - fix: properly handles error response bodies (e.g. 409 + body). Thanks to @shelleysu84 for the deep dive and help isolating this edge case!
 - **v1.12.5** - fix: transformItem should not apply to empty array response
 - **v1.12.4** - fixes: CRUD functions properly pass item to .then() promise (e.g. update(item, oldItem).then(updated => console.log(updated)))
 - **v1.12.2** - fixes: instability introduced with 1.11.0, { log: false }

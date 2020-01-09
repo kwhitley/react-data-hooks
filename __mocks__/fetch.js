@@ -1,6 +1,4 @@
-import 'whatwg-fetch'
 import faker from 'faker'
-import fetchMock from 'fetch-mock'
 import { random } from 'supergeneric/math'
 
 const COLLECTION_MAX = 5

@@ -61,6 +61,29 @@ export const onError = () =>
       expect(onError).toHaveBeenCalled()
     })
 
+    it('onError gets full response body on error code response (e.g. POST 409)', async () => {
+      const { useCollection, endpoint, newItem } = setup()
+      const onError = jest.fn(err => err.message)
+      fetchMock.postOnce(
+        endpoint,
+        {
+          status: 409,
+          body: { type: 'Conflict Error', message: 'User already exists' },
+        },
+        { overwriteRoutes: true }
+      )
+      const { hook, compare, pause } = extractHook(() => useCollection({ onError }))
+      expect(hook().error).toBeUndefined()
+      act(() => {
+        hook().create(newItem)
+      })
+      await pause()
+      expect(onError).toHaveReturnedWith('User already exists')
+      expect(hook().error.message).toBe('User already exists')
+      expect(hook().error.type).toBe('Conflict Error')
+      expect(onError).toHaveBeenCalled()
+    })
+
     it('sets calls onError() with 401/403 errors if onAuthenticationError() not defined', async () => {
       const { useCollection, endpoint, onError } = setup()
       fetchMock.getOnce(endpoint, 401, { overwriteRoutes: true })

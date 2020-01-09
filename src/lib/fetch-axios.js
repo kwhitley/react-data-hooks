@@ -1,24 +1,25 @@
-const getBody = r => {
-  const isJSON = (r.headers.get('content-type') || '').indexOf('json') !== -1
+const isJSON = response => (response.headers.get('content-type') || '').indexOf('json') !== -1
 
-  if (isJSON) {
-    return r.json()
+const getBody = response => {
+  if (!response) {
+    return undefined
   }
 
-  return r.body
+  if (isJSON(response)) {
+    return response.json ? response.json() : JSON.parse(response)
+  }
+
+  return response.body
 }
 
 const emulateAxiosResponse = data => ({ data })
 
-const catchErrors = response => {
+const catchErrors = async response => {
   if (response.status >= 400) {
-    const isJSON = (response.headers.get('content-type') || '').indexOf('application/json') !== -1
     const errorResponse = new Error(response.statusText)
     errorResponse.status = Number(response.status)
     errorResponse.msg = response.statusText
-    if (isJSON) {
-      errorResponse.body = JSON.parse(response.body)
-    }
+    errorResponse.body = await getBody(response)
 
     throw errorResponse
   }
