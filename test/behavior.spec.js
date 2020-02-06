@@ -2,9 +2,15 @@ import 'whatwg-fetch'
 import { example1 } from './examples'
 import * as returns from './returns'
 import * as options from './options'
+import { clearStore } from './clearStore'
 
 describe('BEHAVIOR' + example1, () => {
+  describe('global export { clearStore } function', () => {
+    clearStore()
+  })
+
   describe('RETURN from instantiated hook...', () => {
+    returns.clearStore()
     returns.create()
     returns.data()
     returns.error()
@@ -26,6 +32,7 @@ describe('BEHAVIOR' + example1, () => {
     options.interval()
     // options.loadOnlyOnce()
     options.log()
+    options.namespace()
     options.onAuthenticationError()
     options.onCreate()
     options.onError()
@@ -33,6 +40,7 @@ describe('BEHAVIOR' + example1, () => {
     options.onRemove()
     options.onReplace()
     options.onUpdate()
+    options.persist()
     options.query()
     options.transform()
     options.transformCollection()

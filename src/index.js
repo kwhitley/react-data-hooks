@@ -3,11 +3,47 @@ import useStore from 'use-store'
 import { fetchAxios, objectFilter, autoResolve, autoReject, getPatch, FetchStore } from './lib'
 
 const LOG_PREFIX = '[react-data-hooks]: '
+const HASH_PREFIX = 'rdh:'
 
 // helper function to assemble endpoint parts, joined by '/', but removes undefined attributes
 const getEndpoint = (...parts) => parts.filter(p => p !== undefined).join('/')
 
+// generates a unique hash for component render-busting via <Component key={someUniqueKey} />
 const getHash = () => ({ key: Math.floor(Math.random() * 1e12) })
+
+// converts a value or function into the corresponding value
+const functionOrValue = fnv => {
+  const value = typeof fnv === 'function' ? fnv() : fnv
+
+  if (typeof fnv !== 'undefined' && !['string', 'number'].includes(typeof value)) {
+    console.log('throwing on', { fnv, value, type: typeof fnv })
+    throw new TypeError('"namespace" option must be a string, number, or function that returns one of those')
+  }
+
+  return value || ''
+}
+
+// no-op for logging
+const noop = () => {}
+
+// localStorage-clearing function
+export const clearStore = (namespace, undefinedAllowed = true) => {
+  if (namespace === undefined && !undefinedAllowed) {
+    throw new TypeError('"namespace" option must be set when using clearStore() to prevent over-aggressive clearing')
+  }
+
+  let pattern = HASH_PREFIX + (namespace ? namespace + ':' : '')
+
+  // console.log('clearing store with pattern', pattern, 'from localStorage', Object.keys(localStorage))
+
+  Object.keys(localStorage)
+    .filter(key => key.indexOf(pattern) !== -1)
+    .forEach(key => {
+      // console.log('removing store entry', key)
+      localStorage.removeItem(key)
+    })
+  // .forEach(key => console.log('testing', key, ' => ', pattern.test(key)))
+}
 
 // helper function to handle functions that may be passed a DOM event
 const eventable = fn => (...args) => {
@@ -26,8 +62,6 @@ const createLogAndSetMeta = ({ log, setMeta }) => newMeta => {
   log('setting meta', newMeta)
   setMeta(newMeta)
 }
-
-const noop = () => {}
 
 export const createRestHook = (endpoint, createHookOptions = {}) => (...args) => {
   let [id, hookOptions] = args
@@ -58,6 +92,10 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     isCollection,
     loadOnlyOnce = false,
     log = () => {},
+    mergeOnCreate = true,
+    mergeOnUpdate = true,
+    mock,
+    namespace, // string, number, or function that returns one
     onAuthenticationError,
     onCreate = () => {},
     onError = console.error,
@@ -65,9 +103,6 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
     onRemove = () => {},
     onReplace = () => {},
     onUpdate = () => {},
-    mergeOnCreate = true,
-    mergeOnUpdate = true,
-    mock,
     query = {},
     transform,
     transformCollection,
@@ -121,7 +156,11 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
       ? JSON.stringify({ dynamic: true })
       : undefined
 
-  let key = 'rdh:' + getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
+  let key =
+    HASH_PREFIX +
+    functionOrValue(namespace) +
+    ':' +
+    getEndpoint(endpoint, (!isCollection && (id || ':id')) || undefined, queryKey)
 
   let [data, setData] = useStore(key, initialValue, options)
   let [meta, setMeta] = useState({
@@ -467,6 +506,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
   let loadFunction = eventable(load)
 
   return {
+    clearStore: () => clearStore(namespace, false),
     data,
     load: loadFunction,
     refresh: loadFunction,

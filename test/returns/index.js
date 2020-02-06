@@ -1,3 +1,4 @@
+export * from './clearStore'
 export * from './create'
 export * from './data'
 export * from './error'

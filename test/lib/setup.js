@@ -1,4 +1,5 @@
 import 'whatwg-fetch'
+import 'jest-localstorage-mock'
 import fetchMock from 'fetch-mock'
 import { renderHook, act } from '@testing-library/react-hooks'
 import { createRestHook } from '../../src'

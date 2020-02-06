@@ -1,10 +1,14 @@
 import { renderHook, cleanup, act, unmount } from '@testing-library/react-hooks'
-import { createRestHook } from '../src'
+import { createRestHook, clearStore } from '../src'
 
 describe('react-data-hooks', () => {
   describe('EXPORTS', () => {
-    test(`import { createRestHook } from 'react-data-hooks'`, () => {
+    it(`import { createRestHook } from 'react-data-hooks'`, () => {
       expect(typeof createRestHook).toBe('function')
+    })
+
+    it(`import { clearStore } from 'react-data-hooks'`, () => {
+      expect(typeof clearStore).toBe('function')
     })
   })
 
