@@ -253,6 +253,7 @@ export default function MyApp() {
 
 ## Changelog
 
+- **v1.14.0** - feature: load() function returns promise to allow load-chaining.
 - **v1.13.0** - feature: added clearStore(namespace?) global export and returned method from data hook (to clear own entries), as well as namespace option on data hook (for namespace-specific clearing). See tests for details.
 - **v1.12.7** - fix: properly handles error response bodies (e.g. 409 + body). Thanks to @shelleysu84 for the deep dive and help isolating this edge case!
 - **v1.12.5** - fix: transformItem should not apply to empty array response

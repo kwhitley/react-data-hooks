@@ -77,5 +77,20 @@ export const load = () =>
         await pause()
         compare('data', flaggedFeed)
       })
+
+      it(`returns a promise`, async () => {
+        const { useCollection, api, endpoint } = setup()
+        const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
+
+        act(() => {
+          expect(() =>
+            hook()
+              .load()
+              .then(() => {})
+          ).not.toThrow()
+        })
+
+        await pause()
+      })
     })
   })

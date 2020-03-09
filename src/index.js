@@ -373,7 +373,7 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         error: undefined,
       })
 
-    fetchStore
+    return fetchStore
       .get(fetchEndpoint, { params: query }, fetchOptions)
       .then(({ data }) => {
         try {
@@ -420,6 +420,8 @@ export const createRestHook = (endpoint, createHookOptions = {}) => (...args) =>
         } catch (err) {
           handleError(err)
         }
+
+        return data
       })
       .catch(err => handleError(err.response || err))
   }

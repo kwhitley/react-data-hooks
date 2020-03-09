@@ -17,4 +17,19 @@ export const create = () =>
       compare('data', [...collection, postResponse])
       expect(onCreate).toHaveBeenCalled()
     })
+
+    it(`returns a promise`, async () => {
+      const { useCollection, api, endpoint, newItem } = setup()
+      const { hook, compare, pause } = extractHook(() => useCollection({ autoload: false }))
+
+      act(() => {
+        expect(() =>
+          hook()
+            .create(newItem)
+            .then(() => {})
+        ).not.toThrow()
+      })
+
+      await pause()
+    })
   })
